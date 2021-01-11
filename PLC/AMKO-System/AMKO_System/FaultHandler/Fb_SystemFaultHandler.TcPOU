@@ -1,0 +1,395 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="Fb_SystemFaultHandler" Id="{63d9dbdb-7a1d-43ad-9d1e-008ba0d86cdf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL Fb_SystemFaultHandler
+VAR_INPUT
+	nNumberOfModules	: UDINT ; // Number of modules connected to the system fault handler
+END_VAR
+VAR_IN_OUT
+	arpModules			: ARRAY [0..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ;
+END_VAR
+VAR_OUTPUT
+	// Fault types 
+	bSystemFF			: BOOL 	:= FALSE	; // System fatal fault is active
+	bSystemCF			: BOOL 	:= FALSE	; // System Cycle fault is active
+	bSystemMC 			: BOOL 	:= FALSE	; // a missing condition is active only 
+END_VAR
+VAR
+	// Message variables
+	bResetFaults		: REFERENCE TO BOOL 	:= GVL_Message.bResetFaults		; // Reset system faults 
+	bCmdSnoozeMessage	: REFERENCE TO BOOL  	:= GVL_Message.bCmdSnoozeMessage; // Snooze message display
+	arActiveFaults 		: REFERENCE TO ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault := GVL_Message.arActiveFaults ; // Active faults overview for showing in HMI
+	arOldFaults 		: ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault ; // Old faults overview for comparing to active
+	arWriteToLog		: ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault ; // Fault array for writing to log file 
+	// Message logging
+	dToday				: DATE 	; 
+	nWriteStep			: UDINT := 0 ;
+	bWriteError			: BOOL 	; // write to file error occured
+	nWriteErroId		: UDINT ; // write error id
+	// Write variables
+	sActFileName		: STRING;
+	hFile				: UINT	:= 0;(* File handle of the source file *)
+	sMessageString		: ARRAY [0..Param_Messages.nMESSAGE_COLUMNS] OF STRING (GVL_Parameters.MAX_CSV_FIELD_LENGTH); (* temporary parameter buffer to string*)
+	sCSVLine			: T_MaxString := '';(* Single CSV text line (row, record), we are using string as record buffer (your are able to see created fields) *)
+	sCSVField			: T_MaxString := '';(* Single CSV field value (column, record field) *)
+END_VAR
+VAR // functions 
+	tofSnoozeMessages	: TOF ; // timer function for message snoozing
+	// Log to file functions
+	fbFileOpen		: FB_FileOpen	;(* Opens file *)
+	fbFileClose		: FB_FileClose	;(* Closes file *)
+	fbFileGets		: FB_FileGets	;(* Reads one record (line) *)
+	fbFilePuts		: FB_FilePuts	;(* Writes one record (line) *)
+	fbReader		: FB_CSVMemBufferReader;(* Helper function block used to parse CSV data bytes (single record line) *)
+	fbWriter		: FB_CSVMemBufferWriter;(* Helper function block used to create CSV data bytes (single record line) *)
+END_VAR 
+VAR CONSTANT
+	stEmptyMessageUdt : UDT_Fault := (	Active 			:= FALSE,
+									FaultType 		:= E_FaultTypes.NA,
+									MessageNumber	:= 0,
+									LocationNumber	:= 0,
+									Discription 	:= '',
+									LocationName	:= '',
+									ComponentType	:= E_ComponentTypes.NA,
+									StartTime		:= DT#2020-1-1-00:00:00,
+									EndTime			:= DT#2020-1-1-00:00:00,
+									FullFaultId		:= '0'	)  ;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Check modules for active messages 
+CheckForModuleFaults();
+// set system fault bits 
+ExecSetFaultBit(); 
+// Message Screen controller 
+ExecScreenControl();
+// Log faults when they are reset
+ExecMessageCompare();
+// Logfile writer 
+ExecWriteToLog();
+]]></ST>
+    </Implementation>
+    <Folder Name="Private" Id="{d1168527-87de-49aa-89b2-4e5f63714071}" />
+    <Method Name="CheckForModuleFaults" Id="{4b59df83-3910-4127-9da2-0705efc500b2}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD PRIVATE CheckForModuleFaults : BOOL // check all modules for faults and copy them to the main fault array
+VAR
+	// functional variables
+	i 					: UDINT ;
+	j 					: UDINT ;
+	// temporary fault storage
+	arTempFaults	: ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault ; // internal fault array
+	p				: UDINT	;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Go over modules to check for fault messages 
+FOR i := 0 TO nNumberOfModules DO 
+	// Check for active messages
+	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
+		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType <> E_FaultTypes.NA THEN 
+			arTempFaults[p]:= arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j] ;
+			p := MAX( p + 1, Param_Messages.nMAX_MESSAGES_SHOWN)  ;
+		ELSE
+			EXIT ;
+		END_IF
+	END_FOR
+END_FOR
+
+arOldFaults		:= arActiveFaults 	;
+arActiveFaults	:= arTempFaults 	;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecMessageCompare" Id="{dcd002b7-41ad-4179-b8bd-5d15c68a81f8}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecMessageCompare : BOOL
+VAR
+	// functional variables
+	i 			: UDINT ;
+	j 			: UDINT ;
+	bFaultFound : BOOL ;
+	p			: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if any changes occured in the active faults
+FOR i := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO
+	// break loop if fault is empty
+	IF  arOldFaults[i].FaultType = E_FaultTypes.NA THEN  
+		EXIT;
+	ELSE
+		// check if the fault is still active
+		bFaultFound := TRUE; 
+		FOR j := 0 TO Utilities_Library.Param_Messages.nMAX_MESSAGES_SHOWN DO
+			bFaultFound := arOldFaults[i].FullFaultId = arActiveFaults[j].FullFaultId AND bFaultFound ;
+		END_FOR
+		// if the fault is not faund then wrtie it to the logging array for loging
+		IF NOT bFaultFound THEN 
+			arWriteToLog[p] := arOldFaults[i] ;
+			p := p + 1 ; 
+		END_IF
+	END_IF
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecScreenControl" Id="{97bd5a6e-8490-4360-ab2a-d5203e748724}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecScreenControl : BOOL // Control message screen 
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[tofSnoozeMessages(IN := bCmdSnoozeMessage, PT := GVL_Message.tMESSAGESNOOZEDURATION);
+
+// Set screen control 
+IF bSystemCF OR bSystemFF THEN 
+	GVL_Message.bHideFaults := FALSE ;
+ELSIF bSystemMC AND NOT tofSnoozeMessages.Q THEN 
+	GVL_Message.bHideFaults := FALSE ;
+ELSE
+	GVL_Message.bHideFaults := TRUE ;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSetFaultBit" Id="{8b29bda1-eb98-4ef1-83eb-e8b334d940f7}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecSetFaultBit : BOOL
+VAR
+	// functional variables
+	i 			: UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bSystemFF	:= FALSE ;
+bSystemCF	:= FALSE ;
+bSystemMC	:= FALSE ;
+
+FOR i := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO
+	bSystemFF	:= arActiveFaults[i].FaultType = E_FaultTypes.FF OR bSystemFF;
+	bSystemCF	:= arActiveFaults[i].FaultType = E_FaultTypes.CF OR bSystemCF;
+	bSystemMC	:= arActiveFaults[i].FaultType = E_FaultTypes.MC OR bSystemMC;
+END_FOR
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecWriteToLog" Id="{2fec12f5-ad63-46e4-9c10-f061a916e904}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecWriteToLog : BOOL
+VAR 
+	i : UDINT ; 
+	p : UDINT ; // Fault array pointer
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[dToday := DT_TO_DATE(Sys_Variables.SystemTime);
+// create file name with Current date 
+sActFileName 	:= CONCAT(STR1 := Param_Messages.sLOGFILE_PATH	, STR2 := Param_Messages.sLOGFILE_NAME	);
+sActFileName 	:= CONCAT(STR1 := sActFileName					, STR2 := DATE_TO_STRING(dToday)		);
+sActFileName 	:= CONCAT(STR1 := sActFileName					, STR2 := '.csv'						);
+
+// ===== Start file write =====
+CASE nWriteStep OF
+	0:	(* Wait until log array is filled *)
+		IF arWriteToLog[0].FaultType <> E_FaultTypes.NA THEN 
+			hFile				:= 0;
+			nWriteStep 			:= 1;
+		ELSE 
+			RETURN ;
+		END_IF
+	1:	(* Open source file *)
+		fbFileOpen(  bExecute := FALSE  );
+		fbFileOpen( sNetId := GVL_Parameters.sNetId, sPathName := sActFileName , nMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT,(* Open file in TEXT mode! *)
+					ePath := PATH_GENERIC, bExecute := TRUE );
+		nWriteStep := nWriteStep + 1 ;
+	2:(* Wait until open not busy *)
+		fbFileOpen( bExecute := FALSE, bError => bWriteError, nErrID => nWriteErroId, hFile => hFile );
+		IF NOT fbFileOpen.bBusy THEN
+			IF NOT fbFileOpen.bError THEN
+				nWriteStep := nWriteStep + 1 ;
+			ELSE(* Error: file not found? *)
+				nWriteStep := 100;
+			END_IF
+		END_IF
+	3: (* Check if faultrecord is active if so skip record *)
+		nWriteStep := nWriteStep + 1 ;
+	4:(* Convert one PLC record to CSV format *)
+		sCSVLine := '';
+		fbWriter.eCmd := eEnumCmd_First;(* Write first field value *)
+		// write message data to string
+		sMessageString[0] 	:= TO_STRING(arWriteToLog[p].FaultType				);
+		sMessageString[1]	:= DT_TO_STRING(arWriteToLog[p].StartTime			);
+		sMessageString[2]	:= DT_TO_STRING(Sys_Variables.SystemTime			);
+		sMessageString[3]	:= UDINT_TO_STRING(arWriteToLog[p].MessageNumber	);
+		sMessageString[4]	:= UDINT_TO_STRING(arWriteToLog[p].LocationNumber	); 
+		sMessageString[5]	:= arWriteToLog[p].Discription						;
+		sMessageString[6]	:= arWriteToLog[p].LocationName						;
+		sMessageString[7]	:= TO_STRING(arWriteToLog[p].ComponentType			);
+		// write data to .csv buffer 
+		FOR i := 0 TO Param_Messages.nMESSAGE_COLUMNS BY 1 DO
+			sCSVField := STRING_TO_CSVFIELD(in :=  sMessageString[i], FALSE );
+			(* Add new field to the record buffer *)
+			fbWriter( 	pBuffer := ADR( sCSVLine ), cbBuffer := SIZEOF( sCSVLine ) - 1, putValue := sCSVField, pValue := 0, cbValue := 0,
+						bCRLF := ( i = Param_Messages.nMESSAGE_COLUMNS ) );(* bCRLF == TRUE => Write CRLF after the last field value *)
+			IF fbWriter.bOk THEN
+				fbWriter.eCmd := eEnumCmd_Next;
+			ELSE
+				nWriteStep := 100;
+				RETURN;
+			END_IF
+		END_FOR(* FOR nColumn := 0... *)
+
+		(* FB_FilePuts adds allready CR (carriage return) to the written line.
+		We have to replace the $R$L characters with $L character to avoid double CR. *)
+		IF RIGHT( sCSVLine, 2 ) = '$R$L' THEN
+			sCSVLine := REPLACE( sCSVLine, '$L', 2, LEN( sCSVLine ) - 1 );
+		END_IF
+		nWriteStep := nWriteStep + 1 ;
+	5:	(* Write single text line to file *)
+		fbFilePuts( bExecute := FALSE );
+		fbFilePuts( sNetId := GVL_Parameters.sNetId, hFile := hFile, sLine := sCSVLine, bExecute := TRUE );
+		nWriteStep := nWriteStep + 1 ;
+	6:(* Wait until write not busy *)
+		fbFilePuts( bExecute := FALSE, bError => bWriteError, nErrID => nWriteErroId );
+		IF NOT fbFilePuts.bBusy THEN
+			IF NOT fbFilePuts.bError THEN
+				nWriteStep := nWriteStep + 1 ;
+			ELSE(* Error *)
+				nWriteStep := 100;
+			END_IF
+		END_IF
+	7: (* clear fault from array and go to next fault *)
+		arWriteToLog[p]:= stEmptyMessageUdt;
+		IF p < Param_Messages.nMAX_MESSAGES_SHOWN THEN 
+			p := p +1 ;
+		END_IF
+		nWriteStep := nWriteStep +1 ;
+	8: (* If fault is active then repeat previous step, else close file*)		
+		IF  arWriteToLog[p].FaultType <> E_FaultTypes.NA THEN 
+			nWriteStep := 3 ;
+		ELSE
+			nWriteStep := 10;
+		END_IF
+	10:	(* Close source file *)
+		fbFileClose( bExecute := FALSE );
+		fbFileClose( sNetId := GVL_Parameters.sNetId, hFile := hFile, bExecute := TRUE );
+		nWriteStep := 11;
+	11:(* Wait until close not busy *)
+		fbFileClose( bExecute := FALSE, bError => bWriteError, nErrID => nWriteErroId );
+		IF ( NOT fbFileClose.bBusy ) THEN
+			hFile 		:= 0;
+			nWriteStep 	:= 100;
+		END_IF
+	100: (* Error or ready nWriteStep => cleanup *)
+		IF ( hFile <> 0 ) THEN
+			nWriteStep	:= 10; (* Close the source file *)
+		ELSE
+			nWriteStep 	:= 0;	(* Ready *)
+			ExecWriteToLog := TRUE ;
+		END_IF
+END_CASE
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Fb_SystemFaultHandler">
+      <LineId Id="9" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="117" Count="3" />
+      <LineId Id="116" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_SystemFaultHandler.CheckForModuleFaults">
+      <LineId Id="59" Count="14" />
+      <LineId Id="31" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_SystemFaultHandler.ExecMessageCompare">
+      <LineId Id="113" Count="7" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="127" Count="6" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_SystemFaultHandler.ExecScreenControl">
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_SystemFaultHandler.ExecSetFaultBit">
+      <LineId Id="186" Count="2" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="191" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="147" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_SystemFaultHandler.ExecWriteToLog">
+      <LineId Id="267" Count="5" />
+      <LineId Id="7" Count="2" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="282" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="19" Count="2" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="24" Count="3" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="29" Count="3" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="34" Count="2" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="217" Count="1" />
+      <LineId Id="127" Count="1" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="51" Count="2" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="60" Count="3" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="65" Count="4" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="80" Count="2" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="85" Count="3" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="90" Count="3" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="95" Count="3" />
+      <LineId Id="100" Count="5" />
+      <LineId Id="107" Count="3" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="146" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

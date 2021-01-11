@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <GVL Name="GVL_Main" Id="{908c133f-8f32-4327-a1b8-222df9031ea5}">
+    <Declaration><![CDATA[
+{attribute 'qualified_only'} // Main system variables and state indicators
+VAR_GLOBAL CONSTANT
+	cnMaxNUMBEROFMODULES 	: UDINT := 10 		; // "maximum" number of modules in the system
+	CtAIRPRESSUREDELAY	: TIME 	:= T#500MS	; // Timout before air fault becomes active
+	cbUPSPRESENT		: BOOL	:= FALSE 	; // Enable automatic shutdown when power is interupted
+END_VAR
+VAR_GLOBAL PERSISTENT
+	nTotalUnitsProduced		: UDINT ; // Units produced 
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="Udt_ModuleId" Id="{478ef210-3e60-456a-8f1e-af63de69c0dd}">
+    <Declaration><![CDATA[TYPE Udt_ModuleId :
+STRUCT
+	nNumber		: UDINT ; // Module identification number used for sorting order
+	sName		: STRING; // Module name
+	pFunction	: POINTER TO Fb_ModuleBase ;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,811 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'reflection'}
+PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
+VAR_IN_OUT
+	// HMI Screens 
+	nHMIShownscreen	: INT ; // show visualization screen (0 = default home screen, 1 = automatic screen, 2 =< configurable) 
+END_VAR
+VAR
+	// Fault indications
+	bMissingCond	: BOOL := FALSE ; // Module missing condition active
+	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
+	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
+
+	// State indication
+	bSafeStopping	: BOOL := false ; // Module is stopping by safety
+	bIsSafe			: BOOL := FALSE ; // Module is safe and locked until safety is ok
+	bNoreference	: BOOL := FALSE ; // Module Startup Undefined initialization required
+
+	bInitializing	: BOOL := FALSE ; // Module startup initializing
+	binitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
+
+	bIdle 			: BOOL := FALSE ; // Module startup Idle no commands active
+
+	bEnabling 		: BOOL := FALSE ; // Module Startup enabeling 
+	bEnabled 		: BOOL := FALSE ; // Module Startup Enabled
+	
+	bHoming			: BOOL := FALSE ; // Module startup homing back to base position and recalibrate
+	bHomed 			: BOOL := FALSE ; // Module startup homed waiting for further further commands
+
+	bHolding 		: BOOL := FALSE ; // Module Module Hold motion command executing
+	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
+	
+	bResetting 		: BOOL := FALSE ; // Module Reset resetting error status
+	bResetDone 		: BOOL := FALSE ; // Module reset is done   
+
+	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual 
+	
+	bStartAuto		: BOOL := FALSE ; // Start automatic mode
+	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
+	
+	bPoweringOff	: BOOL := FALSE ; // Module is powering off
+	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
+
+END_VAR
+VAR
+	// System inputs 
+	ibEstopOk 			AT%I*	: BOOL  ; // system emergency stop ok
+	ibSystemSafetyOK	AT%I*	: BOOL  ; // System is safe 
+	ibPowerSupplyOk	 	AT%I*	: BOOL  ; // System Power supply is ok 
+	fbAirpressureOk 			: Fb_DevDigitalInputFunctions  	; // system airpressure is ok
+	fbCmdResetSafety		 	: FB_DevPushbuttonLight 		; // System reset
+	
+	// System safety valve
+	fbValveMainAirSupply		: FB_DevValve ; // Main air supply valve 
+	
+	// system Commands 
+	fbCmdStartSystem		 	: FB_DevPushbuttonLight  		; // (re)start system input from button
+	fbCmdStartManual			: FB_DevHMIButton 				; // Start system in manual mode 
+	fbCmdPowerOff				: FB_DevHMIButton 				; // Power off system
+	
+	//System state
+	bSystemOK				: BOOL := FALSE ; // all safety and vitals are OK
+	eStateSystem			: E_StateSystem := E_StateSystem.NoReference ; // State of system
+
+	// Set system variables
+	fbSetSystemVariables	: Fb_SystemVariables ;
+	
+	// System Fault handling
+	fbSystemFaultHandler	: Fb_SystemFaultHandler ;
+	fbOperatorMessage		: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
+	
+ 	// Module states
+	nNumberOfModules	: UDINT := 0 ; // Number of modules added to the system 
+	arpModules			: ARRAY [0..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
+
+	// power down system function
+	ntShutDown			: NT_Shutdown ; // shutdown system function 
+
+	// Manual controller
+	bDevicesAddedtoManual : BOOL := FALSE ; // Add system device (buttons) to manual controller
+
+	// Function path 
+	{attribute 'instance-path'} 
+    {attribute 'noinit'}
+	sPath			: STRING	; // Path name of function (used for manual reference
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// check if at least one module is added else return 
+IF arpModules[0].pFunction = 0 THEN 
+	RETURN;
+END_IF
+
+// check functions
+CheckSystemOK();
+
+// Run system
+ExecSystemRun();
+
+// call device functions 
+CallSystemFunctions();
+
+// Call modules 
+CallModules();]]></ST>
+    </Implementation>
+    <Folder Name="ModuleFunctions" Id="{fb1414af-f6e5-4202-8989-256aa0d1eacc}" />
+    <Folder Name="SystemFunction" Id="{05994c64-d0aa-4e7d-8ae3-f139ae256daf}" />
+    <Method Name="CallModules" Id="{7e8c963f-d98c-43d0-a3ed-11f16c2d5b4d}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE CallModules : BOOL
+VAR
+	i : UDINT ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// set base conditions
+bIsSafe		:= TRUE ;
+bIdle		:= TRUE ;	
+bHeld		:= TRUE ;
+bResetDone 	:= TRUE	;
+bManual		:= TRUE	;
+bAutomatic	:= TRUE	;
+bEnabled	S= bEnabling ;
+
+// copy inputs to modules 
+FOR i := 0 TO nNumberOfModules DO 
+	// set system commands
+	arpModules[i].pFunction^.bEnable			:= bEnabled		;
+	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
+	arpModules[i].pFunction^.bSafetyOK			:= bSystemOK	;
+	// Read state indications 
+	bIsSafe 	:= arpModules[i].pFunction^.bIsSafe AND bIsSafe ;
+	bEnabled 	:= arpModules[i].pFunction^.bEnable AND bEnabled  ;
+	bEnabling	R= bEnabled ;
+	bHeld		:= arpModules[i].pFunction^.bHeld AND bHeld ;
+	bHolding	R= bHeld ;
+	bResetDone	:= arpModules[i].pFunction^.bResetDone AND bResetDone ;
+	bResetting	R= bResetDone ;
+	bManual		:= arpModules[i].pFunction^.bManual AND bManual ;
+	bAutomatic	:= arpModules[i].pFunction^.bAutomatic AND bAutomatic ;
+	bStartAuto	R= bAutomatic ;
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CallSystemFunctions" Id="{5be4e1d6-b194-4082-99a1-645b475d1410}" FolderPath="SystemFunction\">
+      <Declaration><![CDATA[METHOD PRIVATE CallSystemFunctions : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// set system variables 
+fbSetSystemVariables();
+
+// call parameter handler
+GVL_Parameters.fbParameterHandler();
+GVL_DevManual.fbManualControler();
+
+// Execute button functions 
+fbCmdStartSystem();
+fbCmdResetSafety(); 
+// execute input functions
+fbAirpressureOk();
+fbValveMainAirSupply(	nModuleId	:= 0,
+						bEnable		:= TRUE,
+						bSafetyOk	:= ibEstopOk,
+						bReset		:= GVL_Message.bResetFaults);
+// Call persistent data handler 
+DataManager.FbPersistentManager();
+
+// Add device functions to manual controller 
+IF NOT bDevicesAddedtoManual THEN
+	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbAirpressureOk 	);
+	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartSystem	);
+	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdResetSafety	);
+	bDevicesAddedtoManual S= TRUE ;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CheckSystemOK" Id="{b3d7881d-8420-47b1-9d4b-1c3829d8822d}" FolderPath="SystemFunction\">
+      <Declaration><![CDATA[METHOD PRIVATE CheckSystemOK : BOOL
+VAR
+	i : UDINT ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// shutdown emediately if power is down 
+ntShutDown(START := bPowerdOff OR (NOT ibPowerSupplyOk AND GVL_Main.cbUPSPRESENT));
+
+// Call faulthandler
+fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
+						arpModules			:= arpModules,
+						bSystemFF			=> bFatalFault,
+						bSystemCF			=> bCycleFault,
+						bSystemMC			=> bMissingCond);
+				
+// Check system safety and Faults
+
+IF NOT ibEstopOk 
+	OR NOT ibPowerSupplyOk 
+	OR bFatalFault
+	OR fbCmdResetSafety.bFcoDelay 
+	OR bSafeStopping THEN  
+	ExecSafeStop();
+ELSIF NOT ibSystemSafetyOK 
+	OR NOT fbAirpressureOk.bFcoDelay 
+	OR bCycleFault 
+	OR (bHolding AND NOT bIsSafe) THEN
+	ExecSafeHold();
+ELSIF (bIsSafe OR bHeld)  THEN 
+	bSystemOK S= TRUE ;	
+END_IF
+
+bSystemOK R= NOT (ibEstopOk AND ibPowerSupplyOk AND ibSystemSafetyOK AND fbAirpressureOk.bFcoDelay);
+
+// Set safety state and button light state
+fbCmdResetSafety.bEnable S= TRUE ;
+IF NOT ibEstopOk THEN 
+	fbCmdResetSafety.CmdBlinkSlow() ;
+ELSIF NOT ibSystemSafetyOK THEN 
+	fbCmdResetSafety.CmdBlinkSlow() ;
+ELSIF NOT fbAirpressureOk.bFcoDelay THEN
+	fbCmdResetSafety.CmdBlinkFast() ;
+ELSIF NOT bSystemOK THEN
+	fbCmdResetSafety.CmdBlinkFast() ;
+ELSE 
+	fbCmdResetSafety.CmdOn();
+END_IF
+
+// Main air control 
+IF ibEstopOk AND 
+	ibSystemSafetyOK AND 
+	ibPowerSupplyOk AND
+	binitialized THEN 
+fbValveMainAirSupply.CmdOpen();
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdAddModule" Id="{02c45d8a-a400-4bf9-96fe-fbe272a81730}">
+      <Declaration><![CDATA[METHOD PUBLIC CmdAddModule : BOOL
+VAR_INPUT
+	refToModule : REFERENCE TO Fb_ModuleBase ; // reference to module function
+END_VAR
+VAR
+	bModuleAdded	: BOOL ;
+	i 				: UDINT ; 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check if device is not already in the array 
+FOR i:= 0 TO GVL_Main.cnMaxNUMBEROFMODULES DO
+	IF arpModules[i].pFunction = 0 THEN 
+		nNumberOfModules:= i;
+		EXIT;	
+	ELSIF arpModules[i].sName = refToModule.sName THEN 
+		bModuleAdded := TRUE ;
+	ELSE
+		RETURN;
+	END_IF 
+END_FOR
+
+// If device is not found add device to the list
+IF NOT bModuleAdded THEN 
+	nNumberOfModules := LIMIT(0, nNumberOfModules,GVL_Main.cnMaxNUMBEROFMODULES)	;
+	arpModules[nNumberOfModules].nNumber 	:= refToModule.nModuleID;
+	arpModules[nNumberOfModules].sName		:= refToModule.sName	;
+	arpModules[nNumberOfModules].pFunction 	:= ADR(refToModule)		;	
+	bModuleAdded := TRUE ;
+END_IF
+
+CmdAddModule := bModuleAdded ; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecAutomatic" Id="{3c758811-81f1-42d1-83e5-646cc80a7b4f}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecAutomatic : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Run automatic function in 
+FOR i := 0 TO nNumberOfModules DO 
+	arpModules[i].pFunction^.CmdAutomatic() ;
+END_FOR
+
+ExecAutomatic := bAutomatic;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecHoming" Id="{345df0e0-469c-4aba-9303-ad14c7d3f6d3}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecHoming : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Home all modules
+bHomed	:= TRUE;
+FOR i := 0 TO nNumberOfModules DO 
+	IF NOT arpModules[i].pFunction^.bHomed THEN 
+		arpModules[i].pFunction^.CmdHome();
+	END_IF
+	bHomed 	:= bHomed AND arpModules[i].pFunction^.bHomed;
+	bHoming	:= NOT bHomed ;
+ END_FOR
+ 
+ ExecHoming := bHomed ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecPowerOff" Id="{b17ea916-e40f-4a32-a9b5-a5ade237754d}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecPowerOff : BOOL
+VAR_INPUT
+END_VAR
+VAR 
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Power off all modules
+bPowerdOff	:= TRUE;
+FOR i := 0 TO nNumberOfModules DO 
+	bPowerdOff 		:= arpModules[i].pFunction^.CmdPowerOff () AND bPowerdOff ;
+	bPoweringOff	:= NOT bPowerdOff ;
+ END_FOR
+ 
+ ExecPowerOff := bPowerdOff ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSafeHold" Id="{09e80f99-469c-4643-bf23-6284454a47bf}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecSafeHold : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Hold all modules
+bStartAuto		:= FALSE;
+
+bHeld	:= TRUE;
+FOR i := 0 TO nNumberOfModules DO 
+	bHeld	:= bHeld AND	arpModules[i].pFunction^.CmdHold();
+	bHolding:= NOT bHeld ;
+END_FOR
+ 
+ ExecSafeHold := bHeld ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSafeReset" Id="{1f949173-b753-460e-b2f0-a3f94b7a8c12}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecSafeReset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSafeStop" Id="{231fd871-3511-471c-84e1-00de0d5b0d2d}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecSafeStop : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// perform Estop for all modules
+bEnabled		:= FALSE;
+bEnabling		:= FALSE;
+bInitializing	:= FALSE;
+bHoming			:= FALSE;
+bStartAuto		:= FALSE;
+
+// Close and vent main air supply
+fbValveMainAirSupply.CmdClose();
+
+// Module safe stop
+
+bIsSafe			:= TRUE	;
+FOR i := 0 TO nNumberOfModules DO 
+	bIsSafe	:= bIsSafe AND	arpModules[i].pFunction^.CmdEstop();
+END_FOR
+
+bSafeStopping 	:= NOT bIsSafe ;
+
+IF bIsSafe THEN 
+	fbValveMainAirSupply.CmdSafeStop();
+END_IF
+ 
+ExecSafeStop := bIsSafe ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSystemRun" Id="{504c7dee-e26b-448e-99d5-004a6dc8da1e}" FolderPath="SystemFunction\">
+      <Declaration><![CDATA[METHOD INTERNAL ExecSystemRun : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// set system variables 
+fbSetSystemVariables();
+
+// Check for system commands
+IF fbCmdResetSafety.bFcoDelay THEN 
+	eStateSystem := E_StateSystem.NoReference ;
+ELSIF eStateSystem > E_StateSystem.Enable THEN 
+	IF GVL_Message.bResetFaults OR fbCmdResetSafety.bFeStatus THEN
+		bResetDone		:= FALSE ;
+		eStateSystem 	:= E_StateSystem.Reset ;
+	ELSIF fbCmdPowerOff.bFcoDelay THEN 
+		eStateSystem := E_StateSystem.PowerOff ;
+	ELSIF bFatalFault THEN 
+		eStateSystem := E_StateSystem.Enable;
+	ELSIF bCycleFault THEN 
+		IF eStateSystem > E_StateSystem.Idle THEN
+			eStateSystem := E_StateSystem.Idle ;
+		ELSE
+			eStateSystem := E_StateSystem.Enable ;
+		END_IF
+	ELSIF fbCmdStartSystem.bFeStatus THEN 
+		bStartAuto := TRUE ;
+	END_IF
+	
+// Check for safety state
+	IF NOT ibEstopOk OR NOT fbAirpressureOk.bFcoDelay THEN
+		eStateSystem := E_StateSystem.Enable ;
+	ELSIF NOT ibSystemSafetyOK THEN
+		IF eStateSystem > E_StateSystem.Idle THEN
+			eStateSystem := E_StateSystem.Idle ;
+		ELSE
+			eStateSystem := E_StateSystem.Enable ;
+		END_IF
+	END_IF
+ELSE 
+	IF GVL_Message.bResetFaults OR fbCmdResetSafety.bFeStatus THEN
+		bResetDone := FALSE ;
+		bResetting := TRUE ;
+	ELSIF fbCmdPowerOff.bFcoDelay THEN 
+		eStateSystem := E_StateSystem.PowerOff ;
+	END_IF
+END_IF
+
+// add manual function	
+	
+// State machine 
+CASE eStateSystem OF 
+	E_StateSystem.NoReference:
+		nHMIShownscreen := 0 ;
+		binitialized 	:= FALSE ;
+		bHomed			:= FALSE ;
+		bEnabled		:= FALSE ;
+		IF bIsSafe THEN 
+			eStateSystem := E_StateSystem.Initialize ;
+		END_IF
+	E_StateSystem.Initialize:
+		IF Init() THEN
+			eStateSystem := E_StateSystem.LoadParameters	;
+		END_IF
+	E_StateSystem.LoadParameters:
+		IF GVL_Parameters.fbParameterHandler.Init() THEN
+			eStateSystem := E_StateSystem.Enable ;
+		ELSIF GVL_Parameters.fbParameterHandler.bError THEN 
+			eStateSystem := E_StateSystem.NoReference ;
+		END_IF
+	E_StateSystem.Enable:
+		nHMIShownscreen := 0 ;
+		IF bEnabled THEN 
+			eStateSystem := E_StateSystem.Home ;
+		ELSIF GVL_DevManual.bManualModeActive THEN
+			eStateSystem := E_StateSystem.Manual ;
+		ELSIF bFatalFault THEN 
+			bEnabling	:= FALSE ;
+		ELSE
+			bEnabling 	:= bSystemOK;
+		END_IF
+	E_StateSystem.Home:
+		IF ExecHoming() THEN
+			eStateSystem := E_StateSystem.Idle;
+		END_IF
+	E_StateSystem.Reset:
+		nHMIShownscreen := 0 ;
+		IF bResetDone AND bHomed THEN
+			eStateSystem := E_StateSystem.Idle ;
+		ELSIF bResetDone THEN 
+			eStateSystem := E_StateSystem.Enable ;
+		ELSE
+			bResetting S= TRUE ;
+		END_IF
+	E_StateSystem.Idle:
+		nHMIShownscreen := 0 ;
+		fbCmdStartSystem.CmdBlinkSlow();
+		IF bSystemOK AND bStartAuto THEN
+			nHMIShownscreen := 1 ;
+			eStateSystem := E_StateSystem.Automatic ;
+		ELSIF bSystemOK AND GVL_DevManual.bManualModeActive THEN
+			eStateSystem	:= E_StateSystem.Manual ;
+		END_IF
+	E_StateSystem.Automatic:
+			ExecAutomatic();
+			IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
+				eStateSystem := E_StateSystem.Idle ;
+			ELSIF bAutomatic THEN 
+				fbCmdStartSystem.CmdOn();
+			ELSE 
+				fbCmdStartSystem.CmdBlinkFast(); 				
+			END_IF
+	E_StateSystem.Manual:
+			IF NOT GVL_DevManual.bManualModeActive THEN 
+				eStateSystem := E_StateSystem.Enable ;
+			END_IF
+	E_StateSystem.PowerOff:
+		ExecPowerOff();
+	ELSE 
+		;		
+END_CASE
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Init" Id="{77ed26c7-8922-4741-8b27-ccc11849164f}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PRIVATE Init : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : UDINT ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// initialize system functions
+fbValveMainAirSupply.Init(	nDevNumber 	:= 1,
+							eResetState	:= E_ValveResetState.Res_Closed,
+							eSafeState	:= E_ValveResetState.Res_Closed);
+
+
+							
+// Initialize all modules
+binitialized	:= TRUE ;
+FOR i := 0 TO nNumberOfModules DO 
+	IF NOT arpModules[i].pFunction^.binitialized THEN 
+		arpModules[i].pFunction^.CmdInit();
+	END_IF
+	binitialized 	:= binitialized AND arpModules[i].pFunction^.binitialized;
+	bInitializing 	:= NOT binitialized ;
+	// Set feedback to screen (needs to be added)
+ END_FOR
+ 
+ Init := binitialized ;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="SystemBase">
+      <LineId Id="501" Count="0" />
+      <LineId Id="498" Count="2" />
+      <LineId Id="460" Count="0" />
+      <LineId Id="366" Count="3" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="370" Count="2" />
+      <LineId Id="376" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="502" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.CallModules">
+      <LineId Id="90" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="86" Count="3" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.CallSystemFunctions">
+      <LineId Id="36" Count="1" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="41" Count="3" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="24" Count="2" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.CheckSystemOK">
+      <LineId Id="70" Count="1" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="83" Count="4" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="148" Count="1" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="154" Count="2" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="116" Count="1" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="122" Count="1" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="136" Count="1" />
+      <LineId Id="132" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="108" Count="1" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="102" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.CmdAddModule">
+      <LineId Id="6" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="39" Count="7" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecAutomatic">
+      <LineId Id="16" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecHoming">
+      <LineId Id="8" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="10" Count="2" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="24" Count="1" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecPowerOff">
+      <LineId Id="6" Count="2" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecSafeHold">
+      <LineId Id="6" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecSafeReset">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecSafeStop">
+      <LineId Id="6" Count="0" />
+      <LineId Id="18" Count="4" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="35" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="29" Count="3" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecSystemRun">
+      <LineId Id="7" Count="1" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="174" Count="1" />
+      <LineId Id="177" Count="4" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="81" Count="2" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="224" Count="1" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="12" Count="2" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="144" Count="2" />
+      <LineId Id="16" Count="4" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="120" Count="2" />
+      <LineId Id="235" Count="1" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="134" Count="1" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="90" Count="1" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="48" Count="2" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="200" Count="1" />
+      <LineId Id="218" Count="1" />
+      <LineId Id="216" Count="1" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="163" Count="2" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="62" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="102" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.Init">
+      <LineId Id="37" Count="0" />
+      <LineId Id="39" Count="2" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

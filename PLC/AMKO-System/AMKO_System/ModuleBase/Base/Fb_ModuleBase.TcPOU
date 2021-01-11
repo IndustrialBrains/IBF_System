@@ -1,0 +1,417 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="Fb_ModuleBase" Id="{e3f07cb2-eb83-4b34-9aad-2d4595c2aa5d}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'reflection'}
+FUNCTION_BLOCK PUBLIC ABSTRACT Fb_ModuleBase
+VAR_INPUT
+	nModuleID			: 	UDINT 	:= 1 	; // module reference number used for fault, enable, reset, and safety functions (default := 1, 0 = main system)
+	// main system Inputs
+	bEnable				: 	BOOL	:= FALSE ; // (autolinked) module enable 	
+	bCmdReset 			: 	BOOL	:= FALSE ; // (AutoLinked) reset all faults 
+	bSysFatalFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active
+	bSysCycleFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active 
+	// Internal safety 
+	bSafetyOK			: BOOL := FALSE ; // Module internal safety is ok
+END_VAR
+VAR_OUTPUT
+	sName 				: STRING 	:= 'NA' 			; // Module name
+	bAddedToSystem		: BOOL 		:= FALSE 			; // module has been added to the system
+ 	// Com to main system
+	fbFaultHandler		: 	Fb_FaultHandler 		; // Fault handler 
+	sStateIndicator		: 	STRING := ''			; // Operator message, indication of current step or function 
+
+	// Fault indications
+	bMissingCond	: BOOL := FALSE ; // Module missing condition active
+	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
+	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
+
+	// State indication
+	bIsSafe			: BOOL := FALSE ; // Module is safe and locked until safety is ok
+	bNoreference	: BOOL := FALSE ; // Module Startup Undefined initialization required
+	binitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
+	bHomed 			: BOOL := FALSE ; // Module startup homed waiting for further further commands
+
+	bHolding 		: BOOL := FALSE ; // Module Module Hold motion command executing
+	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
+	
+	bResetDone 		: BOOL := FALSE ; // Module reset is done   
+
+	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual
+	bStartAuto		: BOOL := FALSE ; // Module start automatic cycle 
+	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
+	
+	bPoweringOff	: BOOL := FALSE ; // Module is powering off
+	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
+
+END_VAR
+VAR 
+	// manual functions 
+	bParametersAdded		: BOOL := FALSE ;
+	// Persistent data
+	bCmdWritePersistent  : BOOL := false ; // write persistent data to memory
+	// Module data
+	stMessage				: UDT_Fault			; // Message data
+	// Function path 
+	{attribute 'instance-path'} 
+    {attribute 'noinit'}
+	sPath			: STRING	; // Path name of function (used for manual reference)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+// Get device name from function
+IF sName = 'NA' THEN 
+	sName := F_FBNameFromPath(sPath := sPath);
+END_IF
+
+// Add module to system
+IF NOT bAddedToSystem THEN
+	bAddedToSystem S= SystemBase.CmdAddModule(refToModule := THIS^);
+END_IF
+
+// Execute functions
+ExecMainBaseFunctions();
+
+]]></ST>
+    </Implementation>
+    <Folder Name="Commands" Id="{23a18ca6-8b05-47e8-8c4b-aa1afa1e892a}" />
+    <Folder Name="Execute" Id="{f0dd53fd-6b62-4b4d-9761-2507a7488bb2}" />
+    <Folder Name="Private" Id="{c399b340-fa14-4baf-a6f6-90d72fec9257}" />
+    <Method Name="CallComponents" Id="{22be9b1f-00c3-4e1c-90f8-f2ff5645fc88}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT CallComponents : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CheckCollision" Id="{8d738489-b236-4612-b552-096d24330292}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PUBLIC ABSTRACT CheckCollision : BOOL // Checks device commands for positble collisions  and block if necesarry
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdAutomatic" Id="{12a5af10-cb9c-42e0-8f13-2adc898b5d5a}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdAutomatic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bStartAuto 		:= TRUE ;
+
+CmdAutomatic 	:= bAutomatic;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdEstop" Id="{d05300f1-aa34-43f5-a9f7-94f7856dd9ba}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdEstop : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecSafeStop();
+bHomed			:= FALSE ;
+bAutomatic 		:= FALSE ;
+
+
+CmdEstop := bIsSafe ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdHold" Id="{ab17051c-ea15-419f-9ada-82ef46f33e0a}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdHold : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bAutomatic 	:= FALSE ;
+ExecHold();
+
+
+CmdHold := bHeld ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdHome" Id="{3a000da5-5c20-4ff2-8583-74c7fae87bc2}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdHome : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecHome();
+
+CmdHome := bHomed;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdInit" Id="{83c2609c-15fb-4eeb-beb4-42411df76941}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdInit : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecInit();
+
+CmdInit := binitialized;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdPowerOff" Id="{c9bd01d3-368e-4423-bb7c-d2899324267d}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdPowerOff : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecPowerOff();
+bAutomatic := FALSE ;
+
+CmdPowerOff := bPowerdOff;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecAutomatic" Id="{60275d51-07c9-40b6-9565-a211f029bc96}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecAutomatic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecFaultHandling" Id="{98e653af-0f09-41a0-bb7f-7370a5927e63}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD ExecFaultHandling : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call reset functions
+IF bCmdReset THEN 
+	fbFaultHandler.bReset := TRUE ;
+	ExecReset();
+END_IF
+
+// Call message function
+fbFaultHandler(bReset := bCmdReset);
+
+bFatalFault := fbFaultHandler.bActFF ;
+bCycleFault := fbFaultHandler.bActCF ;
+
+IF bFatalFault THEN
+	ExecSafeStop()	;
+	binitialized	:= FALSE; 
+	bHomed			:= FALSE;
+ELSIF bCycleFault THEN
+	bHeld			S= ExecHold();
+	bHolding 		:= NOT bHeld ;
+END_IF
+
+// Reset safe state when enable is active
+bIsSafe R= bEnable ;
+
+// Prevent automatic start when fault is active
+bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecHold" Id="{0018095c-5f39-4db3-b3d8-dd0243064ada}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecHold : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecHome" Id="{50f16f13-6654-4092-b3f6-5fd77273a5a8}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecHome : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecInit" Id="{6bbf633c-be70-4b2b-b0ef-e1874d2714eb}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecInit : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecMainBaseFunctions" Id="{e7f3087e-94c4-4f9d-9692-e5a0969e6fe3}" FolderPath="Private\">
+      <Declaration><![CDATA[METHOD INTERNAL ExecMainBaseFunctions : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Check for anny Internal collisions
+CheckCollision();
+
+// Call components 
+CallComponents();
+
+// Call fault handling function 
+ExecFaultHandling();
+
+// Run automatic function 
+IF bStartAuto THEN 
+	bAutomatic := ExecAutomatic();
+	bStartAuto :=FALSE ;
+ELSE
+	bAutomatic := FALSE ;
+END_IF
+
+// Persistent data 
+IF bCmdWritePersistent THEN 
+	bCmdWritePersistent R= DataManager.FbPersistentManager.Write();
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecManual" Id="{63d94b51-c5c2-4d65-84f7-21d85d57b86f}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ExecManual : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecPowerOff" Id="{ea164508-7b3d-437c-8288-18cdd09bb9f4}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecPowerOff : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecReset" Id="{16710407-862f-42d6-b9d2-79f884d2291c}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecReset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSafeStop" Id="{6444f87d-3200-4afd-ac19-66712355365b}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecSafeStop : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Fb_ModuleBase">
+      <LineId Id="591" Count="0" />
+      <LineId Id="424" Count="3" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="647" Count="3" />
+      <LineId Id="652" Count="0" />
+      <LineId Id="428" Count="2" />
+      <LineId Id="50" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CallComponents">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CheckCollision">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdAutomatic">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdEstop">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdHold">
+      <LineId Id="8" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdHome">
+      <LineId Id="10" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdInit">
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdPowerOff">
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecAutomatic">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecFaultHandling">
+      <LineId Id="37" Count="1" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="43" Count="3" />
+      <LineId Id="66" Count="2" />
+      <LineId Id="47" Count="8" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="63" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecHold">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecHome">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecInit">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecMainBaseFunctions">
+      <LineId Id="339" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="317" Count="0" />
+      <LineId Id="319" Count="0" />
+      <LineId Id="299" Count="1" />
+      <LineId Id="308" Count="0" />
+      <LineId Id="323" Count="3" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="328" Count="1" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="286" Count="2" />
+      <LineId Id="37" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecManual">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecPowerOff">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecReset">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecSafeStop">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
