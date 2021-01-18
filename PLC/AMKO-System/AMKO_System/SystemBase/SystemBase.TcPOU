@@ -61,25 +61,29 @@ VAR
 	fbCmdPowerOff				: FB_DevHMIButton 				; // Power off system
 	
 	//System state
-	bSystemOK				: BOOL := FALSE ; // all safety and vitals are OK
-	eStateSystem			: E_StateSystem := E_StateSystem.NoReference ; // State of system
+	bSystemOK					: BOOL := FALSE ; // all safety and vitals are OK
+	eStateSystem				: E_StateSystem := E_StateSystem.NoReference ; // State of system
 
 	// Set system variables
-	fbSetSystemVariables	: Fb_SystemVariables ;
+	fbSetSystemVariables		: Fb_SystemVariables ;
 	
 	// System Fault handling
-	fbSystemFaultHandler	: Fb_SystemFaultHandler ;
-	fbOperatorMessage		: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
-	
+	fbSystemFaultHandler		: Fb_SystemFaultHandler ;
+	fbOperatorMessage			: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
+
+	// Local Fault Handling
+	fbFaultHandler				: 	Fb_FaultHandler 		; // Fault handler 
+	stMessage					: UDT_Fault			; // Message data
+
  	// Module states
-	nNumberOfModules	: UDINT := 0 ; // Number of modules added to the system 
-	arpModules			: ARRAY [0..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
+	nNumberOfModules			: UDINT := 0 ; // Number of modules added to the system 
+	arpModules					: ARRAY [0..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
 
 	// power down system function
-	ntShutDown			: NT_Shutdown ; // shutdown system function 
+	ntShutDown					: NT_Shutdown ; // shutdown system function 
 
 	// Manual controller
-	bDevicesAddedtoManual : BOOL := FALSE ; // Add system device (buttons) to manual controller
+	bDevicesAddedtoManual 		: BOOL := FALSE ; // Add system device (buttons) to manual controller
 
 	// Function path 
 	{attribute 'instance-path'} 
@@ -157,14 +161,14 @@ GVL_Parameters.fbParameterHandler();
 GVL_DevManual.fbManualControler();
 
 // Execute button functions 
-fbCmdStartSystem();
-fbCmdResetSafety(); 
+fbCmdStartSystem(refFbFault := fbFaultHandler);
+fbCmdResetSafety(refFbFault := fbFaultHandler); 
 // execute input functions
-fbAirpressureOk();
-fbValveMainAirSupply(	nModuleId	:= 0,
-						bEnable		:= TRUE,
+fbAirpressureOk(refFbFault := fbFaultHandler);
+fbValveMainAirSupply(	bEnable		:= TRUE,
 						bSafetyOk	:= ibEstopOk,
-						bReset		:= GVL_Message.bResetFaults);
+						bReset		:= GVL_Message.bResetFaults,
+						refFbFault 	:= fbFaultHandler);
 // Call persistent data handler 
 DataManager.FbPersistentManager();
 
@@ -526,7 +530,8 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// initialize system functions
-fbValveMainAirSupply.Init(	nDevNumber 	:= 1,
+fbValveMainAirSupply.Init(	nId			:= 1,
+							nParentId	:= 1,
 							eResetState	:= E_ValveResetState.Res_Closed,
 							eSafeState	:= E_ValveResetState.Res_Closed);
 
@@ -593,7 +598,9 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="5" Count="0" />
       <LineId Id="9" Count="0" />
       <LineId Id="8" Count="0" />
-      <LineId Id="41" Count="3" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="43" Count="1" />
+      <LineId Id="58" Count="0" />
       <LineId Id="14" Count="1" />
       <LineId Id="30" Count="0" />
       <LineId Id="19" Count="0" />
@@ -791,7 +798,10 @@ FOR i := 0 TO nNumberOfModules DO
     </LineIds>
     <LineIds Name="SystemBase.Init">
       <LineId Id="37" Count="0" />
-      <LineId Id="39" Count="2" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="41" Count="0" />
       <LineId Id="58" Count="0" />
       <LineId Id="57" Count="0" />
       <LineId Id="38" Count="0" />
