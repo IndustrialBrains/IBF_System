@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
   <POU Name="Fb_ModuleBase" Id="{e3f07cb2-eb83-4b34-9aad-2d4595c2aa5d}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK PUBLIC ABSTRACT Fb_ModuleBase
@@ -185,7 +185,7 @@ END_VAR
         <ST><![CDATA[// Call reset functions
 IF bCmdReset THEN 
 	fbFaultHandler.bReset := TRUE ;
-	ExecReset();
+	bResetDone S= ExecReset();
 END_IF
 
 // Call message function

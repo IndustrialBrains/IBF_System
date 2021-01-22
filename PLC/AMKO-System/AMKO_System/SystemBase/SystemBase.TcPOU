@@ -167,7 +167,6 @@ fbCmdResetSafety(refFbFault := fbFaultHandler);
 fbAirpressureOk(refFbFault := fbFaultHandler);
 fbValveMainAirSupply(	bEnable		:= TRUE,
 						bSafetyOk	:= ibEstopOk,
-						bReset		:= GVL_Message.bResetFaults,
 						refFbFault 	:= fbFaultHandler);
 // Call persistent data handler 
 DataManager.FbPersistentManager();
@@ -599,7 +598,7 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="9" Count="0" />
       <LineId Id="8" Count="0" />
       <LineId Id="41" Count="0" />
-      <LineId Id="43" Count="1" />
+      <LineId Id="43" Count="0" />
       <LineId Id="58" Count="0" />
       <LineId Id="14" Count="1" />
       <LineId Id="30" Count="0" />
