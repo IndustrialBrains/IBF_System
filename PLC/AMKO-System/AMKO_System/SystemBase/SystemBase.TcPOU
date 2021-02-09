@@ -312,6 +312,20 @@ FOR i := 0 TO nNumberOfModules DO
  ExecHoming := bHomed ;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecManual" Id="{1eeb2405-fd6d-491e-8ef7-e639f5684ed3}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD PUBLIC ExecManual : BOOL
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Run automatic function in 
+FOR i := 0 TO nNumberOfModules DO 
+	arpModules[i].pFunction^.CmdManual() ;
+END_FOR
+
+ExecManual := bManual;]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecPowerOff" Id="{b17ea916-e40f-4a32-a9b5-a5ade237754d}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PRIVATE ExecPowerOff : BOOL
 VAR_INPUT
@@ -507,9 +521,10 @@ CASE eStateSystem OF
 				fbCmdStartSystem.CmdBlinkFast(); 				
 			END_IF
 	E_StateSystem.Manual:
-			IF NOT GVL_DevManual.bManualModeActive THEN 
-				eStateSystem := E_StateSystem.Enable ;
-			END_IF
+			ExecManual();
+			IF NOT GVL_DevManual.bManualModeActive THEN
+				EStateSystem := E_StateSystem.Enable;
+			END_IF 
 	E_StateSystem.PowerOff:
 		ExecPowerOff();
 	ELSE 
@@ -675,6 +690,10 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="5" Count="0" />
       <LineId Id="24" Count="1" />
     </LineIds>
+    <LineIds Name="SystemBase.ExecManual">
+      <LineId Id="6" Count="4" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
     <LineIds Name="SystemBase.ExecPowerOff">
       <LineId Id="6" Count="2" />
       <LineId Id="16" Count="0" />
@@ -787,7 +806,10 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="216" Count="1" />
       <LineId Id="202" Count="0" />
       <LineId Id="58" Count="0" />
-      <LineId Id="163" Count="2" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="244" Count="0" />
       <LineId Id="61" Count="0" />
       <LineId Id="59" Count="0" />
       <LineId Id="62" Count="1" />

@@ -37,6 +37,7 @@ VAR_OUTPUT
 	bResetDone 		: BOOL := FALSE ; // Module reset is done   
 
 	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual
+	bSemiAuto		: BOOL := FALSE ; // Module work status in semi automatic
 	bStartAuto		: BOOL := FALSE ; // Module start automatic cycle 
 	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
 	
@@ -126,8 +127,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bAutomatic 	:= FALSE ;
-ExecHold();
+        <ST><![CDATA[ExecHold();
 
 
 CmdHold := bHeld ;]]></ST>
@@ -155,6 +155,15 @@ END_VAR
 CmdInit := binitialized;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CmdManual" Id="{7a18f16c-cb69-42f0-ab80-bae80d368991}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD PUBLIC CmdManual : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="CmdPowerOff" Id="{c9bd01d3-368e-4423-bb7c-d2899324267d}" FolderPath="Commands\">
       <Declaration><![CDATA[METHOD INTERNAL CmdPowerOff : BOOL
 VAR_INPUT
@@ -165,6 +174,19 @@ END_VAR
 bAutomatic := FALSE ;
 
 CmdPowerOff := bPowerdOff;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdSemiAuto" Id="{791a75b1-1408-4ba1-a250-3359f3233728}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD PUBLIC CmdSemiAuto : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecSemiAuto();
+
+CmdSemiAuto := bSemiAuto ;
+
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecAutomatic" Id="{60275d51-07c9-40b6-9565-a211f029bc96}" FolderPath="Execute\">
@@ -257,10 +279,15 @@ ExecFaultHandling();
 
 // Run automatic function 
 IF bStartAuto THEN 
-	bAutomatic := ExecAutomatic();
-	bStartAuto :=FALSE ;
+	bAutomatic 	:= ExecAutomatic();
+	bStartAuto 	:= FALSE ;
+	bSemiAuto	:= FALSE ;
+ELSIF bEnable AND NOT bAutomatic THEN
+	bAutomatic 	:= FALSE ;
+	bSemIAuto  	:= ExecSemiAuto();
 ELSE
-	bAutomatic := FALSE ;
+	bAutomatic 	:= FALSE ;
+	bSemiAuto	:= FALSE ;
 END_IF
 
 // Persistent data 
@@ -306,6 +333,15 @@ END_VAR
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecSemiAuto" Id="{6d784c7b-e589-424b-8150-d725f6353df0}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ExecSemiAuto : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="Fb_ModuleBase">
       <LineId Id="591" Count="0" />
       <LineId Id="424" Count="3" />
@@ -335,15 +371,13 @@ END_VAR
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdHold">
-      <LineId Id="8" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="12" Count="0" />
       <LineId Id="7" Count="0" />
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdHome">
-      <LineId Id="10" Count="0" />
-      <LineId Id="15" Count="0" />
+      <LineId Id="19" Count="1" />
       <LineId Id="14" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdInit">
@@ -351,11 +385,21 @@ END_VAR
       <LineId Id="10" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdManual">
+      <LineId Id="5" Count="0" />
+    </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdPowerOff">
       <LineId Id="5" Count="0" />
       <LineId Id="11" Count="0" />
       <LineId Id="10" Count="0" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.CmdSemiAuto">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.ExecAutomatic">
       <LineId Id="5" Count="0" />
@@ -394,7 +438,10 @@ END_VAR
       <LineId Id="308" Count="0" />
       <LineId Id="323" Count="3" />
       <LineId Id="335" Count="0" />
-      <LineId Id="328" Count="1" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="351" Count="2" />
+      <LineId Id="347" Count="1" />
+      <LineId Id="354" Count="0" />
       <LineId Id="327" Count="0" />
       <LineId Id="330" Count="0" />
       <LineId Id="279" Count="0" />
@@ -411,6 +458,9 @@ END_VAR
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.ExecSafeStop">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Fb_ModuleBase.ExecSemiAuto">
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
