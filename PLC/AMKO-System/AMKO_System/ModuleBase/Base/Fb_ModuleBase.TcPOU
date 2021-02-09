@@ -88,7 +88,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="CheckCollision" Id="{8d738489-b236-4612-b552-096d24330292}" FolderPath="Execute\">
-      <Declaration><![CDATA[METHOD PUBLIC ABSTRACT CheckCollision : BOOL // Checks device commands for positble collisions  and block if necesarry
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT CheckCollision : BOOL // Checks device commands for positble collisions  and block if necesarry
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -134,7 +134,7 @@ CmdHold := bHeld ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdHome" Id="{3a000da5-5c20-4ff2-8583-74c7fae87bc2}" FolderPath="Commands\">
-      <Declaration><![CDATA[METHOD INTERNAL CmdHome : BOOL
+      <Declaration><![CDATA[METHOD Internal CmdHome : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -156,12 +156,14 @@ CmdInit := binitialized;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdManual" Id="{7a18f16c-cb69-42f0-ab80-bae80d368991}" FolderPath="Commands\">
-      <Declaration><![CDATA[METHOD PUBLIC CmdManual : BOOL
+      <Declaration><![CDATA[METHOD Internal CmdManual : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[]]></ST>
+        <ST><![CDATA[ExecManual();
+
+CmdManual := bManual;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdPowerOff" Id="{c9bd01d3-368e-4423-bb7c-d2899324267d}" FolderPath="Commands\">
@@ -177,7 +179,7 @@ CmdPowerOff := bPowerdOff;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdSemiAuto" Id="{791a75b1-1408-4ba1-a250-3359f3233728}" FolderPath="Commands\">
-      <Declaration><![CDATA[METHOD PUBLIC CmdSemiAuto : BOOL
+      <Declaration><![CDATA[METHOD INTERNAL CmdSemiAuto : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -387,6 +389,8 @@ END_VAR
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdManual">
       <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdPowerOff">
       <LineId Id="5" Count="0" />
