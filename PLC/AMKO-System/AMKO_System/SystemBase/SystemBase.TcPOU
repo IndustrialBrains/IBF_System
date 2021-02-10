@@ -54,7 +54,7 @@ VAR
 	fbAirpressureOk 			: Fb_DevDigitalInputFunctions  	; // system airpressure is ok
 	fbCmdResetSafety		 	: FB_DevPushbuttonLight 		; // System reset
 	
-	
+	fTrigPowerSupply	: F_TRIG ; // falling edge trigger for power supply
 	// System safety valve
 	fbValveMainAirSupply		: FB_DevValve ; // Main air supply valve 
 	
@@ -220,8 +220,10 @@ END_VAR
         <ST><![CDATA[// Exec safety control
 ExecSafetyControl();
 
+
 // shutdown emediately if power is down 
-ntShutDown(START := bPowerdOff OR (NOT ibPowerSupplyOk AND GVL_Main.cbUPSPRESENT));
+fTrigPowerSupply(CLK := ibPowerSupplyOk);
+ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 
 // Call faulthandler
 fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
@@ -759,9 +761,11 @@ FOR i := 0 TO nNumberOfModules DO
     </LineIds>
     <LineIds Name="SystemBase.CheckSystemOK">
       <LineId Id="168" Count="0" />
-      <LineId Id="170" Count="0" />
+      <LineId Id="170" Count="1" />
       <LineId Id="169" Count="0" />
-      <LineId Id="70" Count="1" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="71" Count="0" />
       <LineId Id="81" Count="0" />
       <LineId Id="83" Count="4" />
       <LineId Id="82" Count="0" />
