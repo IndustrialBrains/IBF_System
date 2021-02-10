@@ -49,11 +49,11 @@ VAR
 END_VAR
 VAR
 	// System inputs 
-	ibEstopOk 			AT%I*	: BOOL  ; // system emergency stop ok
-	ibSystemSafetyOK	AT%I*	: BOOL  ; // System is safe 
 	ibPowerSupplyOk	 	AT%I*	: BOOL  ; // System Power supply is ok 
+	iSystemSafetyFault	AT%I*	: BOOL	; // System safety Fault
 	fbAirpressureOk 			: Fb_DevDigitalInputFunctions  	; // system airpressure is ok
 	fbCmdResetSafety		 	: FB_DevPushbuttonLight 		; // System reset
+	
 	
 	// System safety valve
 	fbValveMainAirSupply		: FB_DevValve ; // Main air supply valve 
@@ -91,11 +91,28 @@ VAR
 
 	// Manual controller
 	bDevicesAddedtoManual 		: BOOL := FALSE ; // Add system device (buttons) to manual controller
+	
 
 	// Function path 
 	{attribute 'instance-path'} 
     {attribute 'noinit'}
 	sPath			: STRING	; // Path name of function (used for manual reference
+END_VAR
+VAR // safety 
+	// inputs 
+	ibEstopOk 			AT%I*	: BOOL  ; // system emergency stop ok
+	ibSystemSafetyOK	AT%I*	: BOOL  ; // System is safe 
+	iEstopFunctionFault AT%I*	: BOOL	; // Emergency stop function fault (wiring or edm fault)
+	iGeneralSafetyFault	AT%I*	: BOOL	; // General safety program fault
+	
+	// Outputs 
+	qbSafetyErrAckn		AT%Q*	: BOOL ; // Safety error acknowledge
+	qbRunSafety			AT%Q*	: BOOL ; // Run safety program
+	qbResetSafety		AT%Q*	: BOOL ; // reset safety program
+
+	// safety Reset Timer	
+	TofSafetyErrAck				: TOF := (PT := T#500MS); // Safety reset timer
+
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -200,7 +217,10 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// shutdown emediately if power is down 
+        <ST><![CDATA[// Exec safety control
+ExecSafetyControl();
+
+// shutdown emediately if power is down 
 ntShutDown(START := bPowerdOff OR (NOT ibPowerSupplyOk AND GVL_Main.cbUPSPRESENT));
 
 // Call faulthandler
@@ -419,6 +439,74 @@ IF bIsSafe THEN
 END_IF
  
 ExecSafeStop := bIsSafe ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSafetyControl" Id="{8ec10b67-53de-4590-9578-2159b6a13b3f}" FolderPath="SystemFunction\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecSafetyControl : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Set safety system in run mode
+IF NOT iGeneralSafetyFault THEN 
+	qbRunSafety := TRUE ;
+ELSE 
+	qbRunSafety := FALSE;
+END_IF
+
+// reset safety faults
+TofSafetyErrAck(IN := qbSafetyErrAckn);
+IF iGeneralSafetyFault THEN 
+	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
+		qbRunSafety := TRUE ;
+	ELSE
+		qbSafetyErrAckn := FALSE; 
+	END_IF
+	stMessage.Active := TRUE ;
+	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+	stMessage.Discription	:= 'Safety program is in fault state. Check wiring ';
+	stMessage.LocationName	:= 'Main safety';
+	stMessage.LocationNumber:= 1;
+	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
+	stMessage.nModuleID		:= 0;
+END_IF
+
+// Estop function faults
+IF iEstopFunctionFault THEN 
+	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
+		qbSafetyErrAckn := TRUE ;
+	ELSE
+		qbSafetyErrAckn := FALSE; 
+	END_IF
+	stMessage.Active 		:= TRUE ;
+	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+	stMessage.Discription	:= 'Emergency stop fault, check emergency button wiring ';
+	stMessage.LocationName	:= 'Emergency stop safety';
+	stMessage.LocationNumber:= 1;
+	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
+	stMessage.nModuleID		:= 0;
+END_IF
+
+// System safety function faults
+IF iSystemSafetyFault THEN 
+	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
+		qbSafetyErrAckn := TRUE ;
+	ELSE
+		qbSafetyErrAckn := FALSE; 
+	END_IF
+	stMessage.Active 		:= TRUE ;
+	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+	stMessage.Discription	:= 'Collision safety fault, check collision detection wiring ';
+	stMessage.LocationName	:= 'Collision safety';
+	stMessage.LocationNumber:= 1;
+	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
+	stMessage.nModuleID		:= 0;
+END_IF
+
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSemiAuto" Id="{d1439c2c-5160-4c2a-96fa-c7dd6421b071}" FolderPath="ModuleFunctions\">
@@ -670,6 +758,9 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="23" Count="0" />
     </LineIds>
     <LineIds Name="SystemBase.CheckSystemOK">
+      <LineId Id="168" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="169" Count="0" />
       <LineId Id="70" Count="1" />
       <LineId Id="81" Count="0" />
       <LineId Id="83" Count="4" />
@@ -778,6 +869,28 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="29" Count="3" />
       <LineId Id="15" Count="0" />
       <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="SystemBase.ExecSafetyControl">
+      <LineId Id="40" Count="2" />
+      <LineId Id="44" Count="1" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="30" Count="8" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="48" Count="2" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="56" Count="9" />
+      <LineId Id="67" Count="3" />
+      <LineId Id="72" Count="2" />
+      <LineId Id="76" Count="9" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="39" Count="0" />
     </LineIds>
     <LineIds Name="SystemBase.ExecSemiAuto">
       <LineId Id="8" Count="4" />
