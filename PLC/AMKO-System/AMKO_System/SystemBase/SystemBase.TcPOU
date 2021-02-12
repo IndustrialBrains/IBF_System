@@ -116,7 +116,10 @@ VAR // safety
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// check if at least one module is added else return 
+      <ST><![CDATA[// Exec safety control
+ExecSafetyControl();
+
+// check if at least one module is added else return 
 IF arpModules[0].pFunction = 0 THEN 
 	RETURN;
 END_IF
@@ -192,7 +195,6 @@ fbStartAuto		( refFbFault := fbFaultHandler );
 fbStartSemiAuto ( refFbFault := fbFaultHandler ); 
 
 fbCmdStartSystem(refFbFault := fbFaultHandler);
-fbCmdResetSafety(refFbFault := fbFaultHandler); 
 // execute input functions
 fbAirpressureOk(refFbFault := fbFaultHandler);
 fbValveMainAirSupply(	bEnable		:= TRUE,
@@ -217,11 +219,7 @@ VAR
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Exec safety control
-ExecSafetyControl();
-
-
-// shutdown emediately if power is down 
+        <ST><![CDATA[// shutdown emediately if power is down 
 fTrigPowerSupply(CLK := ibPowerSupplyOk);
 ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 
@@ -449,7 +447,13 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Set safety system in run mode
+        <ST><![CDATA[// Safety reset button function
+fbCmdResetSafety(refFbFault := fbFaultHandler); 
+
+// Link Safetty Reset
+qbResetSafety := fbCmdResetSafety.bFeStatus ;
+
+// Set safety system in run mode
 IF NOT iGeneralSafetyFault THEN 
 	qbRunSafety := TRUE ;
 ELSE 
@@ -460,7 +464,7 @@ END_IF
 TofSafetyErrAck(IN := qbSafetyErrAckn);
 IF iGeneralSafetyFault THEN 
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
-		qbRunSafety := TRUE ;
+		qbSafetyErrAckn := TRUE; 
 	ELSE
 		qbSafetyErrAckn := FALSE; 
 	END_IF
@@ -696,6 +700,8 @@ FOR i := 0 TO nNumberOfModules DO
       </Implementation>
     </Method>
     <LineIds Name="SystemBase">
+      <LineId Id="618" Count="1" />
+      <LineId Id="616" Count="0" />
       <LineId Id="501" Count="0" />
       <LineId Id="498" Count="2" />
       <LineId Id="460" Count="0" />
@@ -746,7 +752,6 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="63" Count="1" />
       <LineId Id="62" Count="0" />
       <LineId Id="7" Count="0" />
-      <LineId Id="5" Count="0" />
       <LineId Id="9" Count="0" />
       <LineId Id="8" Count="0" />
       <LineId Id="41" Count="0" />
@@ -760,9 +765,6 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="23" Count="0" />
     </LineIds>
     <LineIds Name="SystemBase.CheckSystemOK">
-      <LineId Id="168" Count="0" />
-      <LineId Id="170" Count="1" />
-      <LineId Id="169" Count="0" />
       <LineId Id="70" Count="0" />
       <LineId Id="172" Count="0" />
       <LineId Id="71" Count="0" />
@@ -875,6 +877,12 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="SystemBase.ExecSafetyControl">
+      <LineId Id="95" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="91" Count="0" />
       <LineId Id="40" Count="2" />
       <LineId Id="44" Count="1" />
       <LineId Id="43" Count="0" />
@@ -882,7 +890,7 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="25" Count="1" />
       <LineId Id="29" Count="0" />
       <LineId Id="11" Count="0" />
-      <LineId Id="16" Count="0" />
+      <LineId Id="89" Count="0" />
       <LineId Id="22" Count="1" />
       <LineId Id="10" Count="0" />
       <LineId Id="30" Count="8" />
