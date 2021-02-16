@@ -555,7 +555,7 @@ ELSIF eStateSystem > E_StateSystem.Enable THEN
 		ELSE
 			eStateSystem := E_StateSystem.Enable ;
 		END_IF
-	ELSIF fbCmdStartSystem.bFeStatus THEN 
+	ELSIF fbCmdStartSystem.bFeStatus AND eStateSystem = E_StateSystem.Idle THEN 
 		bStartSemiAuto := TRUE ;
 	END_IF
 	
