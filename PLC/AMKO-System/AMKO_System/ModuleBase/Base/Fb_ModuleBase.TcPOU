@@ -102,7 +102,9 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bStartAuto 		:= TRUE ;
+        <ST><![CDATA[IF NOT bAutomatic THEN 
+	bStartAuto 		:= TRUE ;
+END_IF 
 
 CmdAutomatic 	:= bAutomatic;]]></ST>
       </Implementation>
@@ -284,7 +286,7 @@ CallComponents();
 ExecFaultHandling();
 
 // Run automatic function 
-IF bStartAuto THEN 
+IF bStartAuto OR bAutomatic THEN 
 	bAutomatic 	:= ExecAutomatic();
 	bStartAuto 	:= FALSE ;
 	bSemiAuto	:= FALSE ;
@@ -364,8 +366,10 @@ END_VAR
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdAutomatic">
+      <LineId Id="14" Count="0" />
       <LineId Id="5" Count="0" />
-      <LineId Id="7" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CmdEstop">
