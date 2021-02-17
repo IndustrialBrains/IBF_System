@@ -70,9 +70,10 @@ IF NOT bAddedToSystem THEN
 	bAddedToSystem S= SystemBase.CmdAddModule(refToModule := THIS^);
 END_IF
 
-// Execute functions
-ExecMainBaseFunctions();
-
+IF binitialized THEN 
+	// Execute functions
+	ExecMainBaseFunctions();
+END_IF
 ]]></ST>
     </Implementation>
     <Folder Name="Commands" Id="{23a18ca6-8b05-47e8-8c4b-aa1afa1e892a}" />
@@ -355,6 +356,7 @@ END_VAR
       <LineId Id="424" Count="3" />
       <LineId Id="651" Count="0" />
       <LineId Id="647" Count="3" />
+      <LineId Id="709" Count="0" />
       <LineId Id="652" Count="0" />
       <LineId Id="428" Count="2" />
       <LineId Id="50" Count="0" />
