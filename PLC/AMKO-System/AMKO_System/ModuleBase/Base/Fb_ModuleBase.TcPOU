@@ -225,7 +225,6 @@ bCycleFault := fbFaultHandler.bActCF ;
 
 IF bFatalFault THEN
 	ExecSafeStop()	;
-	binitialized	:= FALSE; 
 	bHomed			:= FALSE;
 ELSIF bCycleFault THEN
 	bHeld			S= ExecHold();
@@ -428,7 +427,8 @@ END_VAR
       <LineId Id="78" Count="0" />
       <LineId Id="44" Count="2" />
       <LineId Id="66" Count="2" />
-      <LineId Id="47" Count="8" />
+      <LineId Id="47" Count="2" />
+      <LineId Id="51" Count="4" />
       <LineId Id="71" Count="0" />
       <LineId Id="69" Count="1" />
       <LineId Id="62" Count="0" />
