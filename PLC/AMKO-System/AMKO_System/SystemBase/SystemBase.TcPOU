@@ -249,19 +249,6 @@ END_IF
 
 bSystemOK R= NOT (ibEstopOk AND ibPowerSupplyOk AND ibSystemSafetyOK AND fbAirpressureOk.bFcoDelay);
 
-// Set safety state and button light state
-fbCmdResetSafety.bEnable S= TRUE ;
-IF NOT ibEstopOk THEN 
-	fbCmdResetSafety.CmdBlinkSlow() ;
-ELSIF NOT ibSystemSafetyOK THEN 
-	fbCmdResetSafety.CmdBlinkSlow() ;
-ELSIF NOT fbAirpressureOk.bFcoDelay THEN
-	fbCmdResetSafety.CmdBlinkFast() ;
-ELSIF NOT bSystemOK THEN
-	fbCmdResetSafety.CmdBlinkFast() ;
-ELSE 
-	fbCmdResetSafety.CmdOn();
-END_IF
 
 // Main air control 
 IF ibEstopOk AND 
@@ -447,7 +434,20 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Safety reset button function
+        <ST><![CDATA[// Set safety state and button light state
+fbCmdResetSafety.bEnable S= TRUE ;
+IF NOT ibEstopOk THEN 
+	fbCmdResetSafety.CmdBlinkSlow() ;
+ELSIF NOT ibSystemSafetyOK THEN 
+	fbCmdResetSafety.CmdBlinkSlow() ;
+ELSIF NOT fbAirpressureOk.bFcoDelay THEN
+	fbCmdResetSafety.CmdBlinkFast() ;
+ELSE 
+	fbCmdResetSafety.CmdOn();
+END_IF
+
+
+// Safety reset button function
 fbCmdResetSafety(refFbFault := fbFaultHandler); 
 
 // Link Safetty Reset
@@ -587,7 +587,7 @@ CASE eStateSystem OF
 		binitialized 	:= FALSE ;
 		bHomed			:= FALSE ;
 		bEnabled		:= FALSE ;
-		IF bIsSafe THEN 
+		IF NOT GVL_Parameters.fbParameterHandler.bError THEN 
 			eStateSystem := E_StateSystem.Initialize ;
 		END_IF
 	E_StateSystem.Initialize:
@@ -602,7 +602,7 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.Enable:
 		nHMIShownscreen := 0 ;
-		IF bEnabled THEN 
+		IF bEnabled AND bIsSafe THEN 
 			eStateSystem := E_StateSystem.Home ;
 		ELSIF GVL_DevManual.bManualModeActive THEN
 			eStateSystem := E_StateSystem.Manual ;
@@ -787,16 +787,6 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="80" Count="0" />
       <LineId Id="122" Count="1" />
       <LineId Id="97" Count="0" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="35" Count="0" />
-      <LineId Id="24" Count="0" />
-      <LineId Id="31" Count="0" />
-      <LineId Id="29" Count="0" />
-      <LineId Id="25" Count="0" />
-      <LineId Id="27" Count="1" />
-      <LineId Id="136" Count="1" />
-      <LineId Id="132" Count="1" />
-      <LineId Id="26" Count="0" />
       <LineId Id="104" Count="0" />
       <LineId Id="103" Count="0" />
       <LineId Id="105" Count="0" />
@@ -878,6 +868,9 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="SystemBase.ExecSafetyControl">
+      <LineId Id="101" Count="7" />
+      <LineId Id="111" Count="2" />
+      <LineId Id="99" Count="1" />
       <LineId Id="95" Count="0" />
       <LineId Id="94" Count="0" />
       <LineId Id="93" Count="0" />
@@ -946,7 +939,10 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="12" Count="2" />
       <LineId Id="150" Count="0" />
       <LineId Id="144" Count="2" />
-      <LineId Id="16" Count="4" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="19" Count="1" />
       <LineId Id="23" Count="0" />
       <LineId Id="22" Count="0" />
       <LineId Id="120" Count="2" />

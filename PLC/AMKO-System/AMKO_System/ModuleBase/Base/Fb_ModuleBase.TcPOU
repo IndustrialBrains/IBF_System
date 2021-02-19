@@ -70,10 +70,8 @@ IF NOT bAddedToSystem THEN
 	bAddedToSystem S= SystemBase.CmdAddModule(refToModule := THIS^);
 END_IF
 
-IF binitialized THEN 
-	// Execute functions
-	ExecMainBaseFunctions();
-END_IF
+// Execute functions
+ExecMainBaseFunctions();
 ]]></ST>
     </Implementation>
     <Folder Name="Commands" Id="{23a18ca6-8b05-47e8-8c4b-aa1afa1e892a}" />
@@ -277,26 +275,29 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Check for anny Internal collisions
-CheckCollision();
-
-// Call components 
-CallComponents();
-
-// Call fault handling function 
+        <ST><![CDATA[// Call fault handling function 
 ExecFaultHandling();
 
-// Run automatic function 
-IF bStartAuto OR bAutomatic THEN 
-	bAutomatic 	:= ExecAutomatic();
-	bStartAuto 	:= FALSE ;
-	bSemiAuto	:= FALSE ;
-ELSIF bEnable AND NOT bAutomatic THEN
-	bAutomatic 	:= FALSE ;
-	bSemIAuto  	:= ExecSemiAuto();
-ELSE
-	bAutomatic 	:= FALSE ;
-	bSemiAuto	:= FALSE ;
+IF binitialized THEN 
+	// Check for anny Internal collisions
+	CheckCollision();
+	
+	// Call components 
+	CallComponents();
+	
+	
+	// Run automatic function 
+	IF bStartAuto OR bAutomatic THEN 
+		bAutomatic 	:= ExecAutomatic();
+		bStartAuto 	:= FALSE ;
+		bSemiAuto	:= FALSE ;
+	ELSIF bEnable AND NOT bAutomatic THEN
+		bAutomatic 	:= FALSE ;
+		bSemIAuto  	:= ExecSemiAuto();
+	ELSE
+		bAutomatic 	:= FALSE ;
+		bSemiAuto	:= FALSE ;
+	END_IF
 END_IF
 
 // Persistent data 
@@ -357,8 +358,7 @@ END_VAR
       <LineId Id="651" Count="0" />
       <LineId Id="647" Count="3" />
       <LineId Id="709" Count="0" />
-      <LineId Id="652" Count="0" />
-      <LineId Id="428" Count="2" />
+      <LineId Id="428" Count="1" />
       <LineId Id="50" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.CallComponents">
@@ -448,20 +448,10 @@ END_VAR
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="Fb_ModuleBase.ExecMainBaseFunctions">
-      <LineId Id="339" Count="0" />
-      <LineId Id="342" Count="0" />
-      <LineId Id="340" Count="0" />
-      <LineId Id="317" Count="0" />
-      <LineId Id="319" Count="0" />
-      <LineId Id="299" Count="1" />
-      <LineId Id="308" Count="0" />
-      <LineId Id="323" Count="3" />
-      <LineId Id="335" Count="0" />
-      <LineId Id="355" Count="0" />
-      <LineId Id="351" Count="2" />
-      <LineId Id="347" Count="1" />
-      <LineId Id="354" Count="0" />
-      <LineId Id="327" Count="0" />
+      <LineId Id="361" Count="2" />
+      <LineId Id="359" Count="0" />
+      <LineId Id="367" Count="18" />
+      <LineId Id="365" Count="0" />
       <LineId Id="330" Count="0" />
       <LineId Id="279" Count="0" />
       <LineId Id="286" Count="2" />
