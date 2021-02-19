@@ -108,6 +108,12 @@
     <PlaceholderReference Include="Utilities_Library">
       <DefaultResolution>Utilities_Library, * (AMKO-Engineering)</DefaultResolution>
       <Namespace>Utilities_Library</Namespace>
+      <Parameters>
+        <Parameter xmlns="">
+          <Key>SLOGFILE_PATH</Key>
+          <Value>'\Hard Disk\TwinCAT\3.1\Boot\FaultLogs\'</Value>
+        </Parameter>
+      </Parameters>
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
