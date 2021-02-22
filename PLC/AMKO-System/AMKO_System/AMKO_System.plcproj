@@ -93,6 +93,10 @@
       <DefaultResolution>Device_Library, * (AMKO-Engineering)</DefaultResolution>
       <Namespace>Device_Library</Namespace>
     </PlaceholderReference>
+    <PlaceholderReference Include="HMI_Library">
+      <DefaultResolution>HMI_Library, * (AMKO-Engineering)</DefaultResolution>
+      <Namespace>HMI_Library</Namespace>
+    </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Standard">
       <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc2_Standard</Namespace>

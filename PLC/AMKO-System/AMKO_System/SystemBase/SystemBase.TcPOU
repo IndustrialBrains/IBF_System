@@ -3,10 +3,6 @@
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
-VAR_IN_OUT
-	// HMI Screens 
-	nHMIShownscreen	: INT ; // show visualization screen (0 = default home screen, 1 = automatic screen, 2 =< configurable) 
-END_VAR
 VAR
 	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
@@ -113,7 +109,6 @@ VAR // safety
 
 	// safety Reset Timer	
 	TofSafetyErrAck				: TOF := (PT := T#500MS); // Safety reset timer
-
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -453,6 +448,11 @@ END_IF
 // Safety reset button function
 fbCmdResetSafety(refFbFault := fbFaultHandler); 
 
+// Set HMI
+IF NOT bSystemOK THEN 
+	GVL_HMI.bEstopActive 	:= TRUE ;
+END_IF
+
 // Link Safetty Reset
 qbResetSafety := fbCmdResetSafety.bFeStatus ;
 
@@ -466,6 +466,8 @@ END_IF
 // reset safety faults
 TofSafetyErrAck(IN := qbSafetyErrAckn);
 IF iGeneralSafetyFault THEN 
+	GVL_HMI.bEstopActive 	:= TRUE ;
+	GVL_HMI.sCmdEstopText 	:= 'Safety Program fault';
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE; 
 	ELSE
@@ -483,6 +485,8 @@ END_IF
 
 // Estop function faults
 IF iEstopFunctionFault THEN 
+	GVL_HMI.bEstopActive 	:= TRUE ;
+	GVL_HMI.sCmdEstopText 	:= 'Safety button fault check button wiring';
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	ELSE
@@ -500,6 +504,8 @@ END_IF
 
 // System safety function faults
 IF iSystemSafetyFault THEN 
+	GVL_HMI.bEstopActive 	:= TRUE ;
+	GVL_HMI.sCmdEstopText 	:= 'Collision detected';
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	ELSE
@@ -586,7 +592,8 @@ END_IF
 // State machine 
 CASE eStateSystem OF 
 	E_StateSystem.NoReference:
-		nHMIShownscreen := 0 ;
+		HMI_Library.GVL_HMI.bCmdSemiAuto 	:= FALSE;
+		HMI_Library.GVL_HMI.bCmdAutomatic	:= FALSE;
 		bHomed			:= FALSE ;
 		bEnabled		:= FALSE ;
 		IF NOT bFatalFault AND NOT binitialized THEN 
@@ -605,7 +612,6 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.NoReference ;
 		END_IF
 	E_StateSystem.Enable:
-		nHMIShownscreen := 0 ;
 		IF bEnabled AND bIsSafe THEN 
 			eStateSystem := E_StateSystem.Home ;
 		ELSIF GVL_DevManual.bManualModeActive THEN
@@ -620,7 +626,6 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
 	E_StateSystem.Reset:
-		nHMIShownscreen := 0 ;
 		IF bResetDone AND bHomed THEN
 			eStateSystem := E_StateSystem.Idle ;
 		ELSIF bResetDone THEN 
@@ -629,43 +634,40 @@ CASE eStateSystem OF
 			bResetting S= TRUE ;
 		END_IF
 	E_StateSystem.Idle:
-		nHMIShownscreen := 0 ;
 		fbCmdStartSystem.CmdBlinkSlow();
 		IF bSystemOK AND bStartAuto THEN
-			nHMIShownscreen := 1 ;
 			eStateSystem := E_StateSystem.Automatic ;
 		ELSIF bSystemOK AND bStartSemiAuto THEN 
-			nHMIShownscreen := 2 ;
 			eStateSystem := E_StateSystem.SemiAuto ;
 		ELSIF bSystemOK AND GVL_DevManual.bManualModeActive THEN
 			eStateSystem	:= E_StateSystem.Manual ;
 		END_IF
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
+		HMI_Library.GVL_HMI.bCmdSemiAuto 	:= TRUE;
 		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFcoInputActive THEN 
 			bStartAuto 		:= TRUE ;
-			nHMIShownscreen := 1 ;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
 	E_StateSystem.Automatic:
-			ExecAutomatic();
-			IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
-				eStateSystem := E_StateSystem.Idle ;
-			ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus THEN  
-				eStateSystem := E_StateSystem.SemiAuto ;
-			ELSIF bAutomatic THEN 
-				fbCmdStartAuto.CmdOn();
-			ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
-				nHMIShownscreen := 2 ;
-				eStateSystem := E_StateSystem.SemiAuto ;
-			ELSE 
-				fbCmdStartSystem.CmdBlinkFast(); 				
-			END_IF
+		ExecAutomatic();
+		HMI_Library.GVL_HMI.bCmdAutomatic := TRUE;
+		IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
+			eStateSystem := E_StateSystem.Idle ;
+		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus THEN  
+			eStateSystem := E_StateSystem.SemiAuto ;
+		ELSIF bAutomatic THEN 
+			fbCmdStartAuto.CmdOn();
+		ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
+			eStateSystem := E_StateSystem.SemiAuto ;
+		ELSE 
+			fbCmdStartSystem.CmdBlinkFast(); 				
+		END_IF
 	E_StateSystem.Manual:
-			ExecManual();
-			IF NOT GVL_DevManual.bManualModeActive THEN
-				EStateSystem := E_StateSystem.Enable;
-			END_IF 
+		ExecManual();
+		IF NOT GVL_DevManual.bManualModeActive THEN
+			EStateSystem := E_StateSystem.Enable;
+		END_IF 
 	E_StateSystem.PowerOff:
 		ExecPowerOff();
 	ELSE 
@@ -882,6 +884,10 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="99" Count="1" />
       <LineId Id="95" Count="0" />
       <LineId Id="94" Count="0" />
+      <LineId Id="134" Count="1" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="127" Count="0" />
       <LineId Id="93" Count="0" />
       <LineId Id="90" Count="0" />
       <LineId Id="92" Count="0" />
@@ -892,16 +898,22 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="46" Count="0" />
       <LineId Id="25" Count="1" />
       <LineId Id="29" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="117" Count="0" />
       <LineId Id="11" Count="0" />
       <LineId Id="89" Count="0" />
       <LineId Id="22" Count="1" />
       <LineId Id="10" Count="0" />
       <LineId Id="30" Count="8" />
       <LineId Id="66" Count="0" />
-      <LineId Id="48" Count="2" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="50" Count="0" />
       <LineId Id="52" Count="2" />
       <LineId Id="56" Count="9" />
-      <LineId Id="67" Count="3" />
+      <LineId Id="67" Count="2" />
+      <LineId Id="123" Count="1" />
+      <LineId Id="70" Count="0" />
       <LineId Id="72" Count="2" />
       <LineId Id="76" Count="9" />
       <LineId Id="47" Count="0" />
@@ -947,6 +959,7 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="131" Count="0" />
       <LineId Id="12" Count="2" />
       <LineId Id="150" Count="0" />
+      <LineId Id="301" Count="0" />
       <LineId Id="145" Count="1" />
       <LineId Id="293" Count="0" />
       <LineId Id="17" Count="0" />
@@ -960,7 +973,6 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="235" Count="1" />
       <LineId Id="123" Count="0" />
       <LineId Id="26" Count="0" />
-      <LineId Id="152" Count="0" />
       <LineId Id="29" Count="1" />
       <LineId Id="134" Count="1" />
       <LineId Id="229" Count="0" />
@@ -971,34 +983,32 @@ FOR i := 0 TO nNumberOfModules DO
       <LineId Id="36" Count="1" />
       <LineId Id="40" Count="0" />
       <LineId Id="39" Count="0" />
-      <LineId Id="89" Count="0" />
-      <LineId Id="154" Count="0" />
-      <LineId Id="90" Count="1" />
+      <LineId Id="89" Count="2" />
       <LineId Id="194" Count="0" />
       <LineId Id="196" Count="0" />
       <LineId Id="92" Count="2" />
       <LineId Id="35" Count="0" />
-      <LineId Id="156" Count="0" />
       <LineId Id="207" Count="0" />
       <LineId Id="42" Count="0" />
-      <LineId Id="158" Count="0" />
       <LineId Id="48" Count="0" />
-      <LineId Id="256" Count="1" />
+      <LineId Id="256" Count="0" />
       <LineId Id="259" Count="0" />
       <LineId Id="49" Count="1" />
       <LineId Id="47" Count="0" />
       <LineId Id="251" Count="1" />
+      <LineId Id="304" Count="0" />
       <LineId Id="254" Count="0" />
       <LineId Id="269" Count="0" />
-      <LineId Id="260" Count="1" />
+      <LineId Id="261" Count="0" />
       <LineId Id="255" Count="0" />
       <LineId Id="41" Count="0" />
       <LineId Id="57" Count="0" />
+      <LineId Id="306" Count="0" />
       <LineId Id="200" Count="1" />
       <LineId Id="287" Count="1" />
       <LineId Id="218" Count="1" />
       <LineId Id="262" Count="0" />
-      <LineId Id="264" Count="1" />
+      <LineId Id="265" Count="0" />
       <LineId Id="216" Count="1" />
       <LineId Id="202" Count="0" />
       <LineId Id="58" Count="0" />
