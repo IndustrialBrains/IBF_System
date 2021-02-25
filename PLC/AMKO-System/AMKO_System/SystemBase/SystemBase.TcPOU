@@ -437,13 +437,11 @@ fbCmdResetSafety.bEnable S= TRUE ;
 IF NOT ibEstopOk THEN 
 	GVL_HMI.bEstopActive 	:= TRUE ;
 	GVL_HMI.sCmdEstopText 	:= 'Emergency Stop Pressed';
-	fbCmdResetSafety.CmdBlinkSlow() ;
+	fbCmdResetSafety.CmdOn() ;
 ELSIF NOT ibSystemSafetyOK THEN 
 	fbCmdResetSafety.CmdBlinkSlow() ;
-ELSIF NOT fbAirpressureOk.bFcoDelay THEN
+ELSIF NOT fbAirpressureOk.bFcoDelay OR NOT bSystemOK THEN
 	fbCmdResetSafety.CmdBlinkFast() ;
-ELSE 
-	fbCmdResetSafety.CmdOn();
 END_IF
 
 
@@ -615,7 +613,10 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.Enable:
 		IF bEnabled AND bIsSafe THEN 
-			eStateSystem := E_StateSystem.Home ;
+			fbCmdStartSystem.CmdBlinkFast();
+			IF fbCmdStartSystem.bFeStatus THEN
+				eStateSystem := E_StateSystem.Home ;
+			END_IF
 		ELSIF GVL_DevManual.bManualModeActive THEN
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bFatalFault THEN 
@@ -623,7 +624,7 @@ CASE eStateSystem OF
 		ELSE
 			bEnabling 	:= bSystemOK;
 		END_IF
-	E_StateSystem.Home:
+	E_StateSystem.Home:	
 		IF ExecHoming() THEN
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
