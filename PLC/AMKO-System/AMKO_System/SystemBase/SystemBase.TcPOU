@@ -612,7 +612,7 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.NoReference ;
 		END_IF
 	E_StateSystem.Enable:
-		IF bEnabled AND bIsSafe THEN 
+		IF bEnabled AND bSystemOK THEN 
 			fbCmdStartSystem.CmdBlinkFast();
 			IF fbCmdStartSystem.bFeStatus THEN
 				eStateSystem := E_StateSystem.Home ;
@@ -664,7 +664,7 @@ CASE eStateSystem OF
 		ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
 		ELSE 
-			fbCmdStartSystem.CmdBlinkFast(); 				
+			fbCmdStartAuto.CmdBlinkFast(); 				
 		END_IF
 	E_StateSystem.Manual:
 		ExecManual();
@@ -690,12 +690,21 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// initialize system functions
-fbValveMainAirSupply.Init(	nId			:= 1,
+fbAirpressureOk.Init	( 	nId 		:= 1,
+							nParentId	:= 1 );
+fbCmdResetSafety.Init	(	nId 		:= 2,
+							nParentId	:= 1 );
+
+fbValveMainAirSupply.Init(	nId			:= 3,
 							nParentId	:= 1,
 							eResetState	:= E_ValveResetState.Res_Closed,
 							eSafeState	:= E_ValveResetState.Res_Closed);
 
+fbCmdStartSystem.Init	( 	nId 		:= 4,
+							nParentId	:= 1 );
 
+fbCmdStartAuto.Init		( 	nId 		:= 5,
+							nParentId	:= 1 );
 							
 // Initialize all modules
 binitialized	:= TRUE ;
