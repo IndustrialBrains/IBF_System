@@ -218,6 +218,15 @@ END_VAR
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecBaseFunctions" Id="{9ca3b82c-fc59-4a02-b721-3d67056da31e}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PUBLIC ExecBaseFunctions : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecFaultHandling" Id="{98e653af-0f09-41a0-bb7f-7370a5927e63}" FolderPath="Private\">
       <Declaration><![CDATA[METHOD ExecFaultHandling : BOOL
 VAR_INPUT
@@ -294,27 +303,33 @@ END_VAR
         <ST><![CDATA[// Call fault handling function 
 ExecFaultHandling();
 
-IF bReferenceOk THEN 
-	// Check for anny Internal collisions
-	CheckCollision();
-	
-	// Call components 
-	CallComponents();
-	
-	
-	// Run automatic function 
-	IF bStartAuto OR bAutomatic THEN 
-		bAutomatic 	:= ExecAutomatic();
-		bStartAuto 	:= FALSE ;
-		bSemiAuto	:= FALSE ;
-	ELSIF bEnable AND NOT bAutomatic THEN
-		bAutomatic 	:= FALSE ;
-		bSemIAuto  	:= ExecSemiAuto();
-	ELSE
-		bAutomatic 	:= FALSE ;
-		bSemiAuto	:= FALSE ;
-	END_IF
+// Check for anny Internal collisions
+CheckCollision();
+
+// Call components 
+CallComponents();
+
+
+// Run automatic function 
+IF bStartAuto OR bAutomatic THEN 
+	bAutomatic 	:= ExecAutomatic();
+	bStartAuto 	:= FALSE ;
+	bSemiAuto	:= FALSE ;
+ELSIF bEnable AND NOT bAutomatic THEN
+	bAutomatic 	:= FALSE ;
+	bSemIAuto  	:= ExecSemiAuto();
+ELSE
+	bAutomatic 	:= FALSE ;
+	bSemiAuto	:= FALSE ;
 END_IF
+
+// run Base Functions 
+IF binitialized 
+AND bEnable 
+AND NOT bManual THEN 
+	ExecBaseFunctions();
+END_IF
+
 
 // Persistent data 
 IF bCmdWritePersistent THEN 

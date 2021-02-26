@@ -122,7 +122,7 @@ END_VAR
 ExecSafetyControl();
 
 // check if all modules are connected else return  
-IF nNumberOfModules < nCmdModulesConected THEN 
+IF nNumberOfModules < nCmdModulesConected - 1 THEN 
 	RETURN;
 END_IF
 
