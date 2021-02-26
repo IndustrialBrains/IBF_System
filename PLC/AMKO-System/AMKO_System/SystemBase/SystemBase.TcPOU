@@ -3,8 +3,10 @@
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
+VAR_INPUT 
+	nCmdModulesConected : UDINT := 1 ; // number of modules connected to system
+END_VAR
 VAR
-
 	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
@@ -119,8 +121,8 @@ END_VAR
       <ST><![CDATA[// Exec safety control
 ExecSafetyControl();
 
-// check if at least one module is added else return 
-IF arpModules[0].pFunction = 0 THEN 
+// check if all modules are connected else return  
+IF nNumberOfModules < nCmdModulesConected THEN 
 	RETURN;
 END_IF
 

@@ -69,6 +69,7 @@ END_IF
 // Add module to system
 IF NOT bAddedToSystem THEN
 	bAddedToSystem S= SystemBase.CmdAddModule(refToModule := THIS^);
+	RETURN;
 END_IF
 
 IF NOT bReferenceOk THEN 
