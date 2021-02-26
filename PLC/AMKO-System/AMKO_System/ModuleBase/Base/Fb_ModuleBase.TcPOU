@@ -293,7 +293,7 @@ END_VAR
         <ST><![CDATA[// Call fault handling function 
 ExecFaultHandling();
 
-IF binitialized THEN 
+IF bReferenceOk THEN 
 	// Check for anny Internal collisions
 	CheckCollision();
 	
