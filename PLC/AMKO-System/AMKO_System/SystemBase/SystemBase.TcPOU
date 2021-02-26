@@ -283,8 +283,6 @@ FOR i:= 0 TO GVL_Main.cnMaxNUMBEROFMODULES DO
 		EXIT;	
 	ELSIF arpModules[i].sName = refToModule.sName THEN 
 		bModuleAdded := TRUE ;
-	ELSE
-		RETURN;
 	END_IF 
 END_FOR
 
