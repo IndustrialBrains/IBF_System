@@ -4,10 +4,14 @@
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
 VAR
+
 	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
 	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
+
+	// Check values
+	bReferenceOk	: BOOL := FALSE ; // All module references  have been checked
 
 	// State indication
 	bSafeStopping	: BOOL := false ; // Module is stopping by safety
@@ -142,6 +146,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// set base conditions
+bReferenceOk := TRUE ;
 bIsSafe		:= TRUE ;
 bIdle		:= TRUE ;	
 bHeld		:= TRUE ;
@@ -158,6 +163,7 @@ FOR i := 0 TO nNumberOfModules DO
 	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
 	arpModules[i].pFunction^.bSafetyOK			:= bSystemOK	;
 	// Read state indications 
+	bReferenceOk := arpModules[i].pFunction^.bReferenceOk AND bReferenceOk ; 
 	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 	AND bIsSafe ;
 	bEnabled 		:= arpModules[i].pFunction^.bEnable 	AND bEnabled  ;
 	bEnabling		R= bEnabled ;
@@ -229,7 +235,6 @@ fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						bSystemMC			=> bMissingCond);
 				
 // Check system safety and Faults
-
 IF NOT ibEstopOk 
 	OR NOT ibPowerSupplyOk 
 	OR bFatalFault
@@ -411,11 +416,12 @@ bStartSemiAuto	:= FALSE;
 fbValveMainAirSupply.CmdClose();
 
 // Module safe stop
-
-bIsSafe			:= TRUE	;
-FOR i := 0 TO nNumberOfModules DO 
-	bIsSafe	:= bIsSafe AND	arpModules[i].pFunction^.CmdEstop();
-END_FOR
+	bIsSafe			:= TRUE	;
+IF binitialized THEN 
+	FOR i := 0 TO nNumberOfModules DO 
+		bIsSafe	:= bIsSafe AND	arpModules[i].pFunction^.CmdEstop();
+	END_FOR
+END_IF
 
 bSafeStopping 	:= NOT bIsSafe ;
 
@@ -596,7 +602,9 @@ CASE eStateSystem OF
 		HMI_Library.GVL_HMI.bCmdAutomatic	:= FALSE;
 		bHomed			:= FALSE ;
 		bEnabled		:= FALSE ;
-		IF NOT bFatalFault AND NOT binitialized THEN 
+		IF NOT bReferenceOk THEN
+			; 
+		ELSIF NOT bFatalFault AND NOT binitialized THEN 
 			eStateSystem 	:= E_StateSystem.Initialize ;
 		ELSIF NOT bFatalFault THEN 
 			eStateSystem 	:= E_StateSystem.LoadParameters ;
