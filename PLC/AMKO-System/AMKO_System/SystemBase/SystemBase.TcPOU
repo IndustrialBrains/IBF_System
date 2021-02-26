@@ -417,7 +417,7 @@ fbValveMainAirSupply.CmdClose();
 
 // Module safe stop
 	bIsSafe			:= TRUE	;
-IF binitialized THEN 
+IF binitialized AND bReferenceOk THEN 
 	FOR i := 0 TO nNumberOfModules DO 
 		bIsSafe	:= bIsSafe AND	arpModules[i].pFunction^.CmdEstop();
 	END_FOR
