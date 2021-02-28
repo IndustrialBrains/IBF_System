@@ -6,8 +6,7 @@ PROGRAM SystemBase // system base program, from here all modules are controlled 
 VAR_INPUT 
 	nCmdModulesConected : UDINT := 1 ; // number of modules connected to system
 END_VAR
-VAR
-	// Fault indications
+VAR	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
 	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
@@ -341,7 +340,8 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Run automatic function in 
+        <ST><![CDATA[bEnabled := FALSE ;
+// Run automatic function in 
 FOR i := 0 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdManual() ;
 END_FOR
@@ -620,13 +620,13 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.NoReference ;
 		END_IF
 	E_StateSystem.Enable:
-		IF bEnabled AND bSystemOK THEN 
+		IF GVL_HMI.bCmdManual THEN
+			eStateSystem := E_StateSystem.Manual ;
+		ELSIF bEnabled AND bSystemOK THEN 
 			fbCmdStartSystem.CmdBlinkFast();
 			IF fbCmdStartSystem.bFeStatus THEN
 				eStateSystem := E_StateSystem.Home ;
 			END_IF
-		ELSIF GVL_DevManual.bManualModeActive THEN
-			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bFatalFault THEN 
 			bEnabling	:= FALSE ;
 		ELSE
@@ -646,7 +646,9 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.Idle:
 		fbCmdStartSystem.CmdBlinkSlow();
-		IF bSystemOK AND bStartAuto THEN
+		IF GVL_HMI.bCmdManual THEN 
+			eStateSystem := E_StateSystem.Manual ;
+		ELSIF bSystemOK AND bStartAuto THEN
 			eStateSystem := E_StateSystem.Automatic ;
 		ELSIF bSystemOK AND bStartSemiAuto THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
@@ -655,14 +657,14 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
-		HMI_Library.GVL_HMI.bCmdSemiAuto 	:= TRUE;
+		GVL_HMI.bCmdSemiAuto 	:= TRUE;
 		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFcoInputActive THEN 
 			bStartAuto 		:= TRUE ;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
 	E_StateSystem.Automatic:
 		ExecAutomatic();
-		HMI_Library.GVL_HMI.bCmdAutomatic := TRUE;
+		Gvl_HMI.bCmdAutomatic := TRUE;
 		IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
 			eStateSystem := E_StateSystem.Idle ;
 		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus THEN  
@@ -675,8 +677,11 @@ CASE eStateSystem OF
 			fbCmdStartAuto.CmdBlinkFast(); 				
 		END_IF
 	E_StateSystem.Manual:
-		ExecManual();
-		IF NOT GVL_DevManual.bManualModeActive THEN
+		IF GVL_DevManual.bManualModeActive THEN
+			ExecManual();
+		END_IF
+		
+		IF NOT GVL_HMI.bCmdManual THEN
 			EStateSystem := E_StateSystem.Enable;
 		END_IF 
 	E_StateSystem.PowerOff:

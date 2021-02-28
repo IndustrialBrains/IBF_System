@@ -325,7 +325,8 @@ END_IF
 
 // run Base Functions 
 IF binitialized 
-AND bEnable 
+AND bEnable
+AND bHomed 
 AND NOT bManual THEN 
 	ExecBaseFunctions();
 END_IF
@@ -344,7 +345,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[]]></ST>
+        <ST><![CDATA[bManual := true;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecPowerOff" Id="{ea164508-7b3d-437c-8288-18cdd09bb9f4}" FolderPath="Execute\">
