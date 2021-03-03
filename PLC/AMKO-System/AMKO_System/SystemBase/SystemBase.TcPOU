@@ -164,20 +164,23 @@ FOR i := 0 TO nNumberOfModules DO
 	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
 	arpModules[i].pFunction^.bSafetyOK			:= bSystemOK	;
 	// Read state indications 
-	bReferenceOk := arpModules[i].pFunction^.bReferenceOk AND bReferenceOk ; 
-	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 	AND bIsSafe ;
-	bEnabled 		:= arpModules[i].pFunction^.bEnable 	AND bEnabled  ;
-	bEnabling		R= bEnabled ;
-	bHeld			:= arpModules[i].pFunction^.bHeld 		AND bHeld ;
-	bHolding		R= bHeld ;
-	bResetDone		:= arpModules[i].pFunction^.bResetDone 	AND bResetDone ;
-	bResetting		R= bResetDone ;
-	bManual			:= arpModules[i].pFunction^.bManual 	AND bManual ;
-	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 	AND bSemiAuto ;
-	bStartSemiAuto	R= bSemiAuto;
-	bAutomatic		:= arpModules[i].pFunction^.bAutomatic 	OR bAutomatic ;
+	bReferenceOk 	:= arpModules[i].pFunction^.bReferenceOk 	AND bReferenceOk ; 
+	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe ;
+	bEnabled 		:= arpModules[i].pFunction^.bEnable 		AND bEnabled  ;
+	bHeld			:= arpModules[i].pFunction^.bHeld 			AND bHeld ;
+	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone ;
+	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual ;
+	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto ;
+	bAutomatic		:= arpModules[i].pFunction^.bAutomatic 		OR bAutomatic ;
 	bStartAuto		:= NOT arpModules[i].pFunction^.bAutomatic 	AND bStartAuto ;
-END_FOR]]></ST>
+END_FOR
+
+// Reset start inputs
+	bEnabling		R= bEnabled 	;
+	bHolding		R= bHeld 		;
+	bResetting		R= bResetDone 	;
+	bStartSemiAuto	R= bSemiAuto	;
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="CallSystemFunctions" Id="{5be4e1d6-b194-4082-99a1-645b475d1410}" FolderPath="SystemFunction\">
