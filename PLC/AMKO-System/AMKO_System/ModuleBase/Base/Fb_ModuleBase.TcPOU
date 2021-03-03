@@ -49,17 +49,17 @@ VAR_OUTPUT
 END_VAR
 VAR 
 	// Internal functions 
-	ReCmdReset : R_TRIG ;
+	ReCmdReset 			: R_TRIG ;
 	// manual functions 
-	bParametersAdded		: BOOL := FALSE ;
+	bParametersAdded	: BOOL := FALSE ;
 	// Persistent data
-	bCmdWritePersistent  : BOOL := false ; // write persistent data to memory
+	bCmdWritePersistent : BOOL := FALSE ; // write persistent data to memory
 	// Module data
-	stMessage				: UDT_Fault			; // Message data
+	stMessage			: UDT_Fault			; // Message data
 	// Function path 
 	{attribute 'instance-path'} 
     {attribute 'noinit'}
-	sPath			: STRING	; // Path name of function (used for manual reference)
+	sPath				: STRING	; // Path name of function (used for manual reference)
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -235,16 +235,15 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Check for command rising edge
+        <ST><![CDATA[// Call reset functions
+IF bCmdReset THEN 
 	ReCmdReset( CLK := bCmdReset);
-
-// Call reset functions
 	IF NOT bResetDone OR ReCmdReset.Q THEN 
 		fbFaultHandler.bReset := TRUE ;
 		bResetDone := ExecReset();
 		bCmdReset := FALSE ;
 	END_IF
-
+END_IF
 // add message if active
 	fbFaultHandler.CmdAddFault( stFault := stMessage );
 
