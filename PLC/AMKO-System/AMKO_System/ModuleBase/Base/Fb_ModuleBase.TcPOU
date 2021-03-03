@@ -237,6 +237,7 @@ END_VAR
 IF bCmdReset THEN 
 	fbFaultHandler.bReset := TRUE ;
 	bResetDone S= ExecReset();
+	bCmdReset := FALSE ;
 END_IF
 
 // add message if active
