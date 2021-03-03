@@ -48,6 +48,8 @@ VAR_OUTPUT
 
 END_VAR
 VAR 
+	// Internal functions 
+	ReCmdReset : R_TRIG ;
 	// manual functions 
 	bParametersAdded		: BOOL := FALSE ;
 	// Persistent data
@@ -233,36 +235,41 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Call reset functions
-IF bCmdReset THEN 
-	fbFaultHandler.bReset := TRUE ;
-	bResetDone S= ExecReset();
+        <ST><![CDATA[// Check for command rising edge
+	ReCmdReset( CLK := bCmdReset);
+	bResetDone R= ReCmdReset.Q ;
 	bCmdReset := FALSE ;
-END_IF
+
+// Call reset functions
+	IF NOT bResetDone THEN 
+		fbFaultHandler.bReset := TRUE ;
+		bResetDone S= ExecReset();
+	END_IF
+
 
 // add message if active
-fbFaultHandler.CmdAddFault( stFault := stMessage );
+	fbFaultHandler.CmdAddFault( stFault := stMessage );
 
 
 // Call message function
-fbFaultHandler(bReset := bCmdReset);
-
-bFatalFault := fbFaultHandler.bActFF ;
-bCycleFault := fbFaultHandler.bActCF ;
-
-IF bFatalFault THEN
-	ExecSafeStop()	;
-	bHomed			:= FALSE;
-ELSIF bCycleFault THEN
-	bHeld			S= ExecHold();
-	bHolding 		:= NOT bHeld ;
-END_IF
+	fbFaultHandler(bReset := bCmdReset);
+	
+	bFatalFault := fbFaultHandler.bActFF ;
+	bCycleFault := fbFaultHandler.bActCF ;
+	
+	IF bFatalFault THEN
+		ExecSafeStop()	;
+		bHomed			:= FALSE;
+	ELSIF bCycleFault THEN
+		bHeld			S= ExecHold();
+		bHolding 		:= NOT bHeld ;
+	END_IF
 
 // Reset safe state when enable is active
-bIsSafe R= bEnable ;
+	bIsSafe R= bEnable ;
 
 // Prevent automatic start when fault is active
-bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
+	bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
 ]]></ST>
       </Implementation>
     </Method>
