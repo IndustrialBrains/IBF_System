@@ -237,15 +237,13 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// Check for command rising edge
 	ReCmdReset( CLK := bCmdReset);
-	bResetDone R= ReCmdReset.Q ;
-	bCmdReset := FALSE ;
 
 // Call reset functions
-	IF NOT bResetDone THEN 
+	IF NOT bResetDone OR ReCmdReset.Q THEN 
 		fbFaultHandler.bReset := TRUE ;
-		bResetDone S= ExecReset();
+		bResetDone := ExecReset();
+		bCmdReset := FALSE ;
 	END_IF
-
 
 // add message if active
 	fbFaultHandler.CmdAddFault( stFault := stMessage );
