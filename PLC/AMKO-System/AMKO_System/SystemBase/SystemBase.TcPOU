@@ -157,6 +157,7 @@ bSemiAuto		:= TRUE ;
 bAutomatic		:= FALSE;
 bEnabled		S= bEnabling ;
 bPowerdOff		:= TRUE;
+bHomed 			:= TRUE;
 
 // copy inputs to modules 
 FOR i := 0 TO nNumberOfModules DO 
@@ -165,16 +166,17 @@ FOR i := 0 TO nNumberOfModules DO
 	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
 	arpModules[i].pFunction^.bSafetyOK			:= bSystemOK	;
 	// Read state indications 
-	bReferenceOk 	:= arpModules[i].pFunction^.bReferenceOk 	AND bReferenceOk ; 
-	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe ;
-	bEnabled 		:= arpModules[i].pFunction^.bEnable 		AND bEnabled  ;
-	bHeld			:= arpModules[i].pFunction^.bHeld 			AND bHeld ;
-	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone ;
-	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual ;
-	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto ;
-	bAutomatic		:= arpModules[i].pFunction^.bAutomatic 		OR bAutomatic ;
-	bStartAuto		:= NOT arpModules[i].pFunction^.bAutomatic 	AND bStartAuto ;
-	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff ;
+	bReferenceOk 	:= arpModules[i].pFunction^.bReferenceOk 	AND bReferenceOk; 
+	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe		;
+	bEnabled 		:= arpModules[i].pFunction^.bEnable 		AND bEnabled	;
+	bHeld			:= arpModules[i].pFunction^.bHeld 			AND bHeld		;
+	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone	;
+	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual		;
+	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto	;
+	bAutomatic		:= arpModules[i].pFunction^.bAutomatic 		OR bAutomatic	;
+	bStartAuto		:= NOT arpModules[i].pFunction^.bAutomatic 	AND bStartAuto	;
+	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff	;
+	bHomed			:= arpModules[i].pFunction^.bHomed			AND bHomed 		;
 END_FOR
 
 // Reset start inputs
@@ -182,7 +184,8 @@ END_FOR
 	bHolding		R= bHeld 		;
 	bResetting		R= bResetDone 	;
 	bStartSemiAuto	R= bSemiAuto	;
-	bPoweringOff	R= bPowerdOff ;
+	bPoweringOff	R= bPowerdOff 	;
+	bHoming			R= bHomed 		;
 ]]></ST>
       </Implementation>
     </Method>
