@@ -147,16 +147,16 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// set base conditions
-bReferenceOk := TRUE ;
-bIsSafe		:= TRUE ;
-bIdle		:= TRUE ;	
-bHeld		:= TRUE ;
-bResetDone 	:= TRUE	;
-bManual		:= TRUE	;
-bSemiAuto	:= TRUE ;
-bAutomatic	:= FALSE;
-bEnabled	S= bEnabling ;
-bPowerdOff	:= TRUE;
+bReferenceOk	:= TRUE ;
+bIsSafe			:= TRUE ;
+bIdle			:= TRUE ;	
+bHeld			:= TRUE ;
+bResetDone 		S= bResetting	;
+bManual			:= TRUE	;
+bSemiAuto		:= TRUE ;
+bAutomatic		:= FALSE;
+bEnabled		S= bEnabling ;
+bPowerdOff		:= TRUE;
 
 // copy inputs to modules 
 FOR i := 0 TO nNumberOfModules DO 
@@ -328,7 +328,6 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Home all modules
-bHomed	:= TRUE;
 FOR i := 0 TO nNumberOfModules DO 
 	IF NOT arpModules[i].pFunction^.bHomed THEN 
 		arpModules[i].pFunction^.CmdHome();
@@ -416,10 +415,9 @@ bStartSemiAuto	:= FALSE;
 fbValveMainAirSupply.CmdClose();
 
 // Module safe stop
-	bIsSafe			:= TRUE	;
 IF binitialized AND bReferenceOk THEN 
 	FOR i := 0 TO nNumberOfModules DO 
-		bIsSafe	:= bIsSafe AND	arpModules[i].pFunction^.CmdEstop();
+		arpModules[i].pFunction^.CmdEstop();
 	END_FOR
 END_IF
 
@@ -586,7 +584,7 @@ ELSIF eStateSystem > E_StateSystem.Enable THEN
 	END_IF
 ELSE 
 	IF GVL_Message.bResetFaults OR fbCmdResetSafety.bFeStatus THEN
-		bResetDone := FALSE ;
+		bResetDone := FALSE;
 		bResetting := TRUE ;
 	ELSIF fbCmdPowerOff.bFcoDelay THEN 
 		eStateSystem := E_StateSystem.PowerOff ;
