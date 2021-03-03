@@ -241,8 +241,8 @@ IF bCmdReset THEN
 	IF NOT bResetDone OR ReCmdReset.Q THEN 
 		fbFaultHandler.bReset := TRUE ;
 		bResetDone := ExecReset();
-		bCmdReset := FALSE ;
 	END_IF
+	bCmdReset := FALSE ;
 END_IF
 // add message if active
 	fbFaultHandler.CmdAddFault( stFault := stMessage );
