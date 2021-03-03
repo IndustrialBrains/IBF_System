@@ -156,6 +156,7 @@ bManual		:= TRUE	;
 bSemiAuto	:= TRUE ;
 bAutomatic	:= FALSE;
 bEnabled	S= bEnabling ;
+bPowerdOff	:= TRUE;
 
 // copy inputs to modules 
 FOR i := 0 TO nNumberOfModules DO 
@@ -173,6 +174,7 @@ FOR i := 0 TO nNumberOfModules DO
 	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto ;
 	bAutomatic		:= arpModules[i].pFunction^.bAutomatic 		OR bAutomatic ;
 	bStartAuto		:= NOT arpModules[i].pFunction^.bAutomatic 	AND bStartAuto ;
+	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff ;
 END_FOR
 
 // Reset start inputs
@@ -180,6 +182,7 @@ END_FOR
 	bHolding		R= bHeld 		;
 	bResetting		R= bResetDone 	;
 	bStartSemiAuto	R= bSemiAuto	;
+	bPoweringOff	R= bPowerdOff ;
 ]]></ST>
       </Implementation>
     </Method>
@@ -330,11 +333,9 @@ FOR i := 0 TO nNumberOfModules DO
 	IF NOT arpModules[i].pFunction^.bHomed THEN 
 		arpModules[i].pFunction^.CmdHome();
 	END_IF
-	bHomed 	:= bHomed AND arpModules[i].pFunction^.bHomed;
-	bHoming	:= NOT bHomed ;
- END_FOR
+END_FOR
  
- ExecHoming := bHomed ;]]></ST>
+ExecHoming := bHomed ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecManual" Id="{1eeb2405-fd6d-491e-8ef7-e639f5684ed3}" FolderPath="ModuleFunctions\">
@@ -361,13 +362,11 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Power off all modules
-bPowerdOff	:= TRUE;
 FOR i := 0 TO nNumberOfModules DO 
-	bPowerdOff 		:= arpModules[i].pFunction^.CmdPowerOff () AND bPowerdOff ;
-	bPoweringOff	:= NOT bPowerdOff ;
- END_FOR
+	arpModules[i].pFunction^.CmdPowerOff () ;
+END_FOR
  
- ExecPowerOff := bPowerdOff ;]]></ST>
+ExecPowerOff := bPowerdOff ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSafeHold" Id="{09e80f99-469c-4643-bf23-6284454a47bf}" FolderPath="ModuleFunctions\">
@@ -381,13 +380,11 @@ END_VAR]]></Declaration>
         <ST><![CDATA[// Hold all modules
 bStartAuto		:= FALSE;
 
-bHeld	:= TRUE;
 FOR i := 0 TO nNumberOfModules DO 
-	bHeld	:= bHeld AND	arpModules[i].pFunction^.CmdHold();
-	bHolding:= NOT bHeld ;
+	arpModules[i].pFunction^.CmdHold();
 END_FOR
- 
- ExecSafeHold := bHeld ;]]></ST>
+
+ExecSafeHold := bHeld ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSafeReset" Id="{1f949173-b753-460e-b2f0-a3f94b7a8c12}" FolderPath="ModuleFunctions\">
