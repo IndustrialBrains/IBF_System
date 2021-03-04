@@ -245,7 +245,9 @@ fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						bSystemMC			=> bMissingCond);
 				
 // Check system safety and Faults
-IF NOT ibEstopOk 
+IF NOT bHomed THEN 
+	bSystemOK := TRUE ;
+ELSIF NOT ibEstopOk 
 	OR NOT ibPowerSupplyOk 
 	OR bFatalFault
 	OR fbCmdResetSafety.bFcoDelay 
