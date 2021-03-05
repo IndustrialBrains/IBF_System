@@ -235,21 +235,23 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Call reset functions
-IF bCmdReset THEN 
+        <ST><![CDATA[// Call message function
+	fbFaultHandler(bReset := bCmdReset);
+
+// Call reset functions
 	ReCmdReset( CLK := bCmdReset);
-	IF NOT bResetDone OR ReCmdReset.Q THEN 
+	
+	IF ReCmdReset.Q THEN 
+		bResetDone := FALSE ;
+	ELSIF NOT bResetDone THEN 
 		fbFaultHandler.bReset := TRUE ;
 		bResetDone := ExecReset();
 	END_IF
+	
 	bCmdReset := FALSE ;
-END_IF
 // add message if active
 	fbFaultHandler.CmdAddFault( stFault := stMessage );
 
-
-// Call message function
-	fbFaultHandler(bReset := bCmdReset);
 	
 	bFatalFault := fbFaultHandler.bActFF ;
 	bCycleFault := fbFaultHandler.bActCF ;

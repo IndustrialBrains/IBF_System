@@ -120,6 +120,13 @@ END_VAR
       <ST><![CDATA[// Exec safety control
 ExecSafetyControl();
 
+// Call faulthandler
+fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
+						arpModules			:= arpModules,
+						bSystemFF			=> bFatalFault,
+						bSystemCF			=> bCycleFault,
+						bSystemMC			=> bMissingCond);
+
 // check if all modules are connected else return  
 IF nNumberOfModules < nCmdModulesConected - 1 THEN 
 	RETURN;
@@ -237,12 +244,6 @@ END_VAR
 fTrigPowerSupply(CLK := ibPowerSupplyOk);
 ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 
-// Call faulthandler
-fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
-						arpModules			:= arpModules,
-						bSystemFF			=> bFatalFault,
-						bSystemCF			=> bCycleFault,
-						bSystemMC			=> bMissingCond);
 				
 // Check system safety and Faults
 IF NOT bHomed THEN 
