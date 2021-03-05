@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
   <POU Name="Fb_SystemFaultHandler" Id="{63d9dbdb-7a1d-43ad-9d1e-008ba0d86cdf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL Fb_SystemFaultHandler
 VAR_INPUT
@@ -56,8 +56,11 @@ VAR CONSTANT
 									FullFaultId		:= '0'	)  ;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Check modules for active messages 
-CheckForModuleFaults();
+      <ST><![CDATA[IF arpModules[0].pFunction <> 0 THEN 
+	// Check modules for active messages 
+	CheckForModuleFaults();
+END_IF
+
 // set system fault bits 
 ExecSetFaultBit(); 
 // Message Screen controller 
