@@ -83,7 +83,7 @@ VAR
 
  	// Module states
 	nNumberOfModules			: UDINT := 0 ; // Number of modules added to the system 
-	arpModules					: ARRAY [0..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
+	arpModules					: ARRAY [1..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
 
 	// power down system function
 	ntShutDown					: NT_Shutdown ; // shutdown system function 
@@ -168,7 +168,7 @@ bPowerdOff		:= TRUE;
 bHomed 			:= TRUE;
 
 // copy inputs to modules 
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	// set system commands
 	arpModules[i].pFunction^.bEnable			:= bEnabled		;
 	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
@@ -289,9 +289,9 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Check if device is not already in the array 
-FOR i:= 0 TO GVL_Main.cnMaxNUMBEROFMODULES DO
+FOR i:= 1 TO GVL_Main.cnMaxNUMBEROFMODULES DO
 	IF arpModules[i].pFunction = 0 THEN 
-		nNumberOfModules:= i;
+		nNumberOfModules:= i - 1;
 		EXIT;	
 	ELSIF arpModules[i].sName = refToModule.sName THEN 
 		bModuleAdded := TRUE ;
@@ -300,7 +300,7 @@ END_FOR
 
 // If device is not found add device to the list
 IF NOT bModuleAdded THEN 
-	nNumberOfModules := LIMIT(0, nNumberOfModules,GVL_Main.cnMaxNUMBEROFMODULES)	;
+	nNumberOfModules := LIMIT(1, nNumberOfModules,GVL_Main.cnMaxNUMBEROFMODULES)	;
 	arpModules[nNumberOfModules].nNumber 	:= refToModule.nModuleID;
 	arpModules[nNumberOfModules].sName		:= refToModule.sName	;
 	arpModules[nNumberOfModules].pFunction 	:= ADR(refToModule)		;	
@@ -319,7 +319,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Run automatic function in 
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdAutomatic() ;
 END_FOR
 
@@ -335,7 +335,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Home all modules
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	IF NOT arpModules[i].pFunction^.bHomed THEN 
 		arpModules[i].pFunction^.CmdHome();
 	END_IF
@@ -352,7 +352,7 @@ END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[bEnabled := FALSE ;
 // Run automatic function in 
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdManual() ;
 END_FOR
 
@@ -368,7 +368,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Power off all modules
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdPowerOff () ;
 END_FOR
  
@@ -386,7 +386,7 @@ END_VAR]]></Declaration>
         <ST><![CDATA[// Hold all modules
 bStartAuto		:= FALSE;
 
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdHold();
 END_FOR
 
@@ -423,7 +423,7 @@ fbValveMainAirSupply.CmdClose();
 
 // Module safe stop
 IF binitialized AND bReferenceOk THEN 
-	FOR i := 0 TO nNumberOfModules DO 
+	FOR i := 1 TO nNumberOfModules DO 
 		arpModules[i].pFunction^.CmdEstop();
 	END_FOR
 END_IF
@@ -542,7 +542,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Run automatic function in 
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdSemiAuto() ;
 END_FOR
 
@@ -726,7 +726,7 @@ fbCmdStartAuto.Init		( 	nId 		:= 5,
 							
 // Initialize all modules
 binitialized	:= TRUE ;
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	IF NOT arpModules[i].pFunction^.binitialized THEN 
 		arpModules[i].pFunction^.CmdInit();
 	END_IF
