@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
   <POU Name="Fb_SystemFaultHandler" Id="{63d9dbdb-7a1d-43ad-9d1e-008ba0d86cdf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL Fb_SystemFaultHandler
 VAR_INPUT
-	nNumberOfModules	: UDINT ; // Number of modules connected to the system fault handler
+	nNumberOfModules	: UDINT := 0; // Number of modules connected to the system fault handler
 END_VAR
 VAR_IN_OUT
-	arpModules			: ARRAY [0..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ;
+	arpModules			: ARRAY [1..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ;
 END_VAR
 VAR_OUTPUT
 	// Fault types 
@@ -56,7 +56,7 @@ VAR CONSTANT
 									FullFaultId		:= '0'	)  ;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF arpModules[0].pFunction <> 0 THEN 
+      <ST><![CDATA[IF nNumberOfModules > 0 THEN 
 	// Check modules for active messages 
 	CheckForModuleFaults();
 END_IF
@@ -84,7 +84,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Go over modules to check for fault messages 
-FOR i := 0 TO nNumberOfModules DO 
+FOR i := 1 TO nNumberOfModules DO 
 	// Check for active messages
 	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
 		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType <> E_FaultTypes.NA THEN 
