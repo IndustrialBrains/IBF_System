@@ -333,12 +333,14 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Home all modules
-FOR i := 0 TO nNumberOfModules DO 
-	IF NOT arpModules[i].pFunction^.bHomed THEN 
-		arpModules[i].pFunction^.CmdHome();
-	END_IF
-END_FOR
+        <ST><![CDATA[IF NOT bHomed THEN
+	// Home all modules
+	FOR i := 0 TO nNumberOfModules DO 
+		IF NOT arpModules[i].pFunction^.bHomed THEN 
+			arpModules[i].pFunction^.CmdHome();
+		END_IF
+	END_FOR
+END_IF 
  
 ExecHoming := bHomed ;]]></ST>
       </Implementation>
@@ -382,12 +384,14 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Hold all modules
-bStartAuto		:= FALSE;
-
-FOR i := 0 TO nNumberOfModules DO 
-	arpModules[i].pFunction^.CmdHold();
-END_FOR
+        <ST><![CDATA[IF NOT bHeld THEN 
+	// Hold all modules
+	bStartAuto		:= FALSE;
+	
+	FOR i := 0 TO nNumberOfModules DO 
+		arpModules[i].pFunction^.CmdHold();
+	END_FOR
+END_IF
 
 ExecSafeHold := bHeld ;]]></ST>
       </Implementation>
@@ -409,22 +413,21 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// perform Estop for all modules
-bEnabled		:= FALSE;
-bEnabling		:= FALSE;
-bInitializing	:= FALSE;
-bHoming			:= FALSE;
-bStartAuto		:= FALSE;
-bStartSemiAuto	:= FALSE;
-
-// Close and vent main air supply
-fbValveMainAirSupply.CmdClose();
-
-// Module safe stop
-IF binitialized AND bReferenceOk THEN 
-	FOR i := 0 TO nNumberOfModules DO 
-		arpModules[i].pFunction^.CmdEstop();
-	END_FOR
+        <ST><![CDATA[IF NOT bIsSafe THEN 
+	// perform Estop for all modules
+	bEnabled		:= FALSE;
+	bEnabling		:= FALSE;
+	bInitializing	:= FALSE;
+	bHoming			:= FALSE;
+	bStartAuto		:= FALSE;
+	bStartSemiAuto	:= FALSE;
+		
+	// Module safe stop
+	IF binitialized AND bReferenceOk THEN 
+		FOR i := 0 TO nNumberOfModules DO 
+			arpModules[i].pFunction^.CmdEstop();
+		END_FOR
+	END_IF
 END_IF
 
 bSafeStopping 	:= NOT bIsSafe ;
