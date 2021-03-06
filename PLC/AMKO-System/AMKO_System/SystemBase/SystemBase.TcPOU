@@ -1,11 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
-VAR_INPUT 
-	nCmdModulesConected : UDINT := 1 ; // number of modules connected to system
-END_VAR
 VAR	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
@@ -115,7 +112,9 @@ VAR // safety
 	// safety Reset Timer	
 	TofSafetyErrAck				: TOF := (PT := T#500MS); // Safety reset timer
 END_VAR
-]]></Declaration>
+VAR // Miscellaneous
+	bFirstCycle : BOOL := TRUE; // Is this the first time the PRG is called?
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Exec safety control
 ExecSafetyControl();
@@ -127,8 +126,10 @@ fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						bSystemCF			=> bCycleFault,
 						bSystemMC			=> bMissingCond);
 
-// check if all modules are connected else return  
-IF nNumberOfModules < nCmdModulesConected - 1 THEN 
+// Check if this is the first cycle the PRG is called
+// if not, return. This is to make sure all modules are connected. 
+IF bFirstCycle THEN
+	bFirstCycle := FALSE;
 	RETURN;
 END_IF
 
