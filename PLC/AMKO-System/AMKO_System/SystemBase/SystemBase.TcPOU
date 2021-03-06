@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
@@ -410,16 +410,16 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// perform Estop for all modules
-bEnabled		:= FALSE;
-bEnabling		:= FALSE;
-bInitializing	:= FALSE;
-bHoming			:= FALSE;
-bStartAuto		:= FALSE;
-bStartSemiAuto	:= FALSE;
-
-// Close and vent main air supply
-fbValveMainAirSupply.CmdClose();
+        <ST><![CDATA[IF NOT bIsSafe THEN 
+	// perform Estop for all modules
+	bEnabled		:= FALSE;
+	bEnabling		:= FALSE;
+	bInitializing	:= FALSE;
+	bHoming			:= FALSE;
+	bStartAuto		:= FALSE;
+	bStartSemiAuto	:= FALSE;
+	
+END_IF
 
 // Module safe stop
 IF binitialized AND bReferenceOk THEN 
@@ -427,7 +427,7 @@ IF binitialized AND bReferenceOk THEN
 		arpModules[i].pFunction^.CmdEstop();
 	END_FOR
 END_IF
-
+	
 bSafeStopping 	:= NOT bIsSafe ;
 
 IF bIsSafe THEN 
