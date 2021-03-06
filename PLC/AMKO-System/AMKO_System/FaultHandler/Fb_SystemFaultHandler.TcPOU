@@ -89,7 +89,7 @@ FOR i := 1 TO nNumberOfModules DO
 	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
 		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType <> E_FaultTypes.NA THEN 
 			arTempFaults[p]:= arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j] ;
-			p := MAX( p + 1, Param_Messages.nMAX_MESSAGES_SHOWN)  ;
+			p := MIN( p + 1, Param_Messages.nMAX_MESSAGES_SHOWN);
 		ELSE
 			EXIT ;
 		END_IF
