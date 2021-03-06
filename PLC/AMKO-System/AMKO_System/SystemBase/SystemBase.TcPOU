@@ -291,7 +291,7 @@ END_VAR
         <ST><![CDATA[// Check if device is not already in the array 
 FOR i:= 1 TO GVL_Main.cnMaxNUMBEROFMODULES DO
 	IF arpModules[i].pFunction = 0 THEN 
-		nNumberOfModules:= i - 1;
+		nNumberOfModules:= i;
 		EXIT;	
 	ELSIF arpModules[i].sName = refToModule.sName THEN 
 		bModuleAdded := TRUE ;
