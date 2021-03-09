@@ -203,10 +203,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// set system variables 
-fbSetSystemVariables();
-
-// call parameter handler
+        <ST><![CDATA[// call parameter handler
 GVL_Parameters.fbParameterHandler();
 GVL_DevManual.fbManualControler();
 
@@ -221,8 +218,6 @@ fbAirpressureOk(refFbFault := fbFaultHandler);
 fbValveMainAirSupply(	bEnable		:= TRUE,
 						bSafetyOk	:= ibEstopOk,
 						refFbFault 	:= fbFaultHandler);
-// Call persistent data handler 
-DataManager.FbPersistentManager();
 
 // Add device functions to manual controller 
 IF NOT bDevicesAddedtoManual THEN
