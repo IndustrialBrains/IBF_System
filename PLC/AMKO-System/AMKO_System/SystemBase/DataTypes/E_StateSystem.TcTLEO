@@ -9,6 +9,7 @@ TYPE E_StateSystem :
 	NoReference		, 	// system has not been initialized
 	Initialize		, 	// System is initializing
 	LoadParameters	, 	// System is loading parameters from/to file
+	Safe			, 	// System is in safety state
 	Enable			, 	// System is enabling 
 	Home			, 	// system is hominig 
 	Reset			, 	// System is resetting
@@ -16,6 +17,7 @@ TYPE E_StateSystem :
 	Manual			, 	// System is in manual mode
 	SemiAuto		, 	// System is in semi auto mode
 	Automatic		, 	// system is in automatic mode 
+	Fault			,	// System is in Fault state
 	PowerOff		// system is powering off
 )INT;
 END_TYPE
@@ -36,6 +38,11 @@ END_TYPE
             </o>
             <o>
               <v n="TextID">"LoadParameters"</v>
+              <v n="TextDefault">""</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"Safe"</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
@@ -71,6 +78,11 @@ END_TYPE
             </o>
             <o>
               <v n="TextID">"Automatic"</v>
+              <v n="TextDefault">""</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"Fault"</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>

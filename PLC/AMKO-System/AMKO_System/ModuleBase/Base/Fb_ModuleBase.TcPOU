@@ -10,6 +10,7 @@ VAR_INPUT
 	bCmdReset 			: 	BOOL	:= FALSE ; // (AutoLinked) reset all faults 
 	bSysFatalFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active
 	bSysCycleFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active 
+	bCmdPause			: 	BOOL 	:= FALSE ; // Pause command	bCmdToStart			
 	// Internal safety 
 	bSafetyOK			: BOOL := FALSE ; // Module internal safety is ok
 END_VAR
@@ -42,6 +43,7 @@ VAR_OUTPUT
 	bSemiAuto		: BOOL := FALSE ; // Module work status in semi automatic
 	bStartAuto		: BOOL := FALSE ; // Module start automatic cycle 
 	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
+	bPaused			: BOOL := false ; // Module paused
 	
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
 	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
@@ -134,9 +136,8 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[ExecSafeStop();
-bHomed			:= FALSE ;
+bSemiAuto		:= FALSE ;
 bAutomatic 		:= FALSE ;
-
 
 CmdEstop := bIsSafe ;]]></ST>
       </Implementation>
@@ -265,7 +266,7 @@ END_VAR
 	END_IF
 
 // Reset safe state when enable is active
-	bIsSafe R= bEnable ;
+	bIsSafe R= bSafetyOK ;
 
 // Prevent automatic start when fault is active
 	bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;

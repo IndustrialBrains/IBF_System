@@ -41,6 +41,9 @@ VAR	// Fault indications
 	bStartAuto		: BOOL := FALSE ; // Start automatic mode
 	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
 	
+	bCmdPause		: BOOL := FALSE ; // Pause all modules 
+	bPaused 		: BOOL := FALSE ; // all modules are paused
+	
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
 	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
 
@@ -53,6 +56,7 @@ VAR
 	fbCmdResetSafety		 	: FB_DevPushbuttonLight 		; // System reset
 	
 	fTrigPowerSupply	: F_TRIG ; // falling edge trigger for power supply
+	toffMainAir			: TOF	:= (PT := T#500ms ); // Main air supply off delay
 	// System safety valve
 	fbValveMainAirSupply		: FB_DevValve ; // Main air supply valve 
 	
@@ -67,6 +71,7 @@ VAR
 	fbCmdPowerOff				: FB_DevHMIButton 				; // Power off system
 	
 	//System state
+	bSafetyOK					: BOOL := false ;
 	bSystemOK					: BOOL := FALSE ; // all safety and vitals are OK
 	eStateSystem				: E_StateSystem := E_StateSystem.NoReference ; // State of system
 
@@ -133,8 +138,11 @@ IF bFirstCycle THEN
 	RETURN;
 END_IF
 
-// check functions
-CheckSystemOK();
+// check system functions
+IF binitialized THEN 
+	CheckSystemOK();
+	CheckSystemCommands();
+END_IF 
 
 // Run system
 ExecSystemRun();
@@ -152,7 +160,9 @@ CallModules();]]></ST>
 VAR
 	i : UDINT ;
 END_VAR
-]]></Declaration>
+VAR
+	AllAutomatic : BOOL ;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// set base conditions
 bReferenceOk	:= TRUE ;
@@ -163,16 +173,19 @@ bResetDone 		S= bResetting	;
 bManual			:= TRUE	;
 bSemiAuto		:= TRUE ;
 bAutomatic		:= FALSE;
+AllAutomatic 	:= TRUE ;
 bEnabled		S= bEnabling ;
 bPowerdOff		:= TRUE;
 bHomed 			:= TRUE;
+bPaused 		:= TRUE;
 
 // copy inputs to modules 
 FOR i := 1 TO nNumberOfModules DO 
 	// set system commands
 	arpModules[i].pFunction^.bEnable			:= bEnabled		;
 	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
-	arpModules[i].pFunction^.bSafetyOK			:= bSystemOK	;
+	arpModules[i].pFunction^.bSafetyOK			:= bSafeStopping;
+	arpModules[i].pFunction^.bCmdPause			:= bCmdPause	; 
 	// Read state indications 
 	bReferenceOk 	:= arpModules[i].pFunction^.bReferenceOk 	AND bReferenceOk; 
 	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe		;
@@ -181,10 +194,11 @@ FOR i := 1 TO nNumberOfModules DO
 	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone	;
 	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual		;
 	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto	;
-	bAutomatic		:= arpModules[i].pFunction^.bAutomatic 		OR bAutomatic	;
-	bStartAuto		:= NOT arpModules[i].pFunction^.bAutomatic 	AND bStartAuto	;
 	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff	;
 	bHomed			:= arpModules[i].pFunction^.bHomed			AND bHomed 		;
+	bPaused			:= arpModules[i].pFunction^.bPaused			AND bPaused		;
+	bAutomatic		S= arpModules[i].pFunction^.bAutomatic ; // Stay in automatic even when one module is in automatic
+	AllAutomatic	:= arpModules[i].pFunction^.bAutomatic 		AND AllAutomatic ; // reset start automatic when al modules are in automatic operation
 END_FOR
 
 // Reset start inputs
@@ -194,6 +208,8 @@ END_FOR
 	bStartSemiAuto	R= bSemiAuto	;
 	bPoweringOff	R= bPowerdOff 	;
 	bHoming			R= bHomed 		;
+	bStartAuto		R= AllAutomatic	; 
+	bCmdPause		R= NOT bAutomatic ;
 ]]></ST>
       </Implementation>
     </Method>
@@ -229,6 +245,28 @@ IF NOT bDevicesAddedtoManual THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CheckSystemCommands" Id="{7c2b1772-f51e-4aa3-a97a-1e93dcc6a18d}" FolderPath="SystemFunction\">
+      <Declaration><![CDATA[METHOD INTERNAL CheckSystemCommands : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ===== full reset ======
+	IF fbCmdResetSafety.bFcoDelay THEN 
+		eStateSystem 	:= E_StateSystem.NoReference ;
+	ELSIF fbCmdResetSafety.bFeStatus 
+	AND eStateSystem <> E_StateSystem.Fault THEN 
+		eStateSystem	:= E_StateSystem.Idle ;
+	END_IF
+
+// ====== power off ======
+	IF fbCmdPowerOff.bFcoDelay THEN 
+		eStateSystem := E_StateSystem.PowerOff ;
+	END_IF
+		
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="CheckSystemOK" Id="{b3d7881d-8420-47b1-9d4b-1c3829d8822d}" FolderPath="SystemFunction\">
       <Declaration><![CDATA[METHOD PRIVATE CheckSystemOK : BOOL
 VAR
@@ -240,34 +278,47 @@ END_VAR
 fTrigPowerSupply(CLK := ibPowerSupplyOk);
 ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 
-				
-// Check system safety and Faults
-IF NOT bHomed THEN 
+// ===== Fault state =====
+
+// ===== Check if system is ok =====
 	bSystemOK := TRUE ;
-ELSIF NOT ibEstopOk 
-	OR NOT ibPowerSupplyOk 
-	OR bFatalFault
-	OR fbCmdResetSafety.bFcoDelay 
-	OR bSafeStopping THEN  
-	ExecSafeStop();
-ELSIF NOT ibSystemSafetyOK 
-	OR NOT fbAirpressureOk.bFcoDelay 
-	OR bCycleFault 
-	OR (bHolding AND NOT bIsSafe) THEN
-	ExecSafeHold();
-ELSIF (bIsSafe OR bHeld)  THEN 
-	bSystemOK S= TRUE ;	
-END_IF
+	bSystemOK := ibPowerSupplyOk 			AND bSystemOK ;
+	bSystemOK := fbAirpressureOk.bFcoDelay 	AND bSystemOK ;
+	bSystemOK := bSafetyOK					AND bSystemOK ;	
+				
+	IF NOT bSystemOK THEN
+		eStateSystem := E_StateSystem.Safe; 
+	ELSIF (bFatalFault OR bCycleFault) AND eStateSystem <> E_StateSystem.Reset THEN 
+		eStateSystem := E_StateSystem.Fault ;
+	END_IF
 
-bSystemOK R= NOT (ibEstopOk AND ibPowerSupplyOk AND ibSystemSafetyOK AND fbAirpressureOk.bFcoDelay);
+// ===== System messages ======
+	IF NOT fbAirpressureOk.bFcoDelay THEN
+		stMessage.Active 		:= TRUE ;
+		stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+		stMessage.Discription	:= 'Main air Pressure low ';
+		stMessage.LocationName	:= 'Main air supply';
+		stMessage.LocationNumber:= 1;
+		stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
+		stMessage.nModuleID		:= 0;
+	END_IF
 
-
+	IF NOT ibPowerSupplyOk THEN 
+		stMessage.Active 		:= TRUE ;
+		stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+		stMessage.Discription	:= '24V power supply low ';
+		stMessage.LocationName	:= '24V Main supply';
+		stMessage.LocationNumber:= 1;
+		stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
+		stMessage.nModuleID		:= 0;
+	END_IF 	
+	
 // Main air control 
-IF ibEstopOk AND 
-	ibSystemSafetyOK AND 
-	ibPowerSupplyOk AND
-	binitialized THEN 
-fbValveMainAirSupply.CmdOpen();
+toffMainAir(IN := bSystemOK);
+IF toffMainAir.Q THEN
+	fbValveMainAirSupply.CmdOpen();
 END_IF
 ]]></ST>
       </Implementation>
@@ -405,16 +456,13 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF NOT bIsSafe THEN 
-	// perform Estop for all modules
-	bEnabled		:= FALSE;
-	bEnabling		:= FALSE;
-	bInitializing	:= FALSE;
-	bHoming			:= FALSE;
-	bStartAuto		:= FALSE;
-	bStartSemiAuto	:= FALSE;
-	
-END_IF
+        <ST><![CDATA[bSafeStopping 	S= NOT bIsSafe ;
+
+bEnabling		:= FALSE;
+bInitializing	:= FALSE;
+bHoming			:= FALSE;
+bStartAuto		:= FALSE;
+bStartSemiAuto	:= FALSE;
 
 // Module safe stop
 IF binitialized AND bReferenceOk THEN 
@@ -422,8 +470,6 @@ IF binitialized AND bReferenceOk THEN
 		arpModules[i].pFunction^.CmdEstop();
 	END_FOR
 END_IF
-	
-bSafeStopping 	:= NOT bIsSafe ;
 
 IF bIsSafe THEN 
 	fbValveMainAirSupply.CmdSafeStop();
@@ -438,7 +484,18 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Set safety state and button light state
+        <ST><![CDATA[IF ibEstopOk 
+AND ibSystemSafetyOK
+THEN
+	bSafetyOK				S= TRUE ;
+	GVL_HMI.bEstopActive 	:= FALSE ;
+ELSE 
+	bSafetyOK				:= FALSE ;
+	GVL_HMI.bEstopActive 	:= TRUE ;
+	eStateSystem			:= E_StateSystem.Safe ;
+END_IF
+
+// Set safety state and button light state
 fbCmdResetSafety.bEnable S= TRUE ;
 IF NOT ibEstopOk THEN 
 	GVL_HMI.bEstopActive 	:= TRUE ;
@@ -454,11 +511,6 @@ END_IF
 // Safety reset button function
 fbCmdResetSafety(refFbFault := fbFaultHandler); 
 
-// Set HMI
-IF NOT bSystemOK THEN 
-	GVL_HMI.bEstopActive 	:= TRUE ;
-END_IF
-
 // Link Safetty Reset
 qbResetSafety := fbCmdResetSafety.bFeStatus ;
 
@@ -472,7 +524,6 @@ END_IF
 // reset safety faults
 TofSafetyErrAck(IN := qbSafetyErrAckn);
 IF iGeneralSafetyFault THEN 
-	GVL_HMI.bEstopActive 	:= TRUE ;
 	GVL_HMI.sCmdEstopText 	:= 'Safety Program fault';
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE; 
@@ -491,7 +542,6 @@ END_IF
 
 // Estop function faults
 IF iEstopFunctionFault THEN 
-	GVL_HMI.bEstopActive 	:= TRUE ;
 	GVL_HMI.sCmdEstopText 	:= 'Safety button fault check button wiring';
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
@@ -510,8 +560,7 @@ END_IF
 
 // System safety function faults
 IF iSystemSafetyFault THEN 
-	GVL_HMI.bEstopActive 	:= TRUE ;
-	GVL_HMI.sCmdEstopText 	:= 'Collision detected';
+	GVL_HMI.sCmdEstopText 	:= 'Collision detection Fault check sensor wiring';
 	IF NOT qbSafetyErrAckn AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	ELSE
@@ -553,61 +602,20 @@ END_VAR
         <ST><![CDATA[// set system variables 
 fbSetSystemVariables();
 
-// Check for system commands
-IF fbCmdResetSafety.bFcoDelay THEN 
-	eStateSystem := E_StateSystem.NoReference ;
-ELSIF eStateSystem > E_StateSystem.Enable THEN 
-	IF GVL_Message.bResetFaults OR fbCmdResetSafety.bFeStatus THEN
-		bResetDone		:= FALSE ;
-		eStateSystem 	:= E_StateSystem.Reset ;
-	ELSIF fbCmdPowerOff.bFcoDelay THEN 
-		eStateSystem := E_StateSystem.PowerOff ;
-	ELSIF bFatalFault THEN 
-		eStateSystem := E_StateSystem.Enable;
-	ELSIF bCycleFault THEN 
-		IF eStateSystem > E_StateSystem.Idle THEN
-			eStateSystem := E_StateSystem.Idle ;
-		ELSE
-			eStateSystem := E_StateSystem.Enable ;
-		END_IF
-	ELSIF fbCmdStartSystem.bFeStatus AND eStateSystem = E_StateSystem.Idle THEN 
-		bStartSemiAuto := TRUE ;
-	END_IF
-	
-// Check for safety state
-	IF NOT ibEstopOk OR NOT fbAirpressureOk.bFcoDelay THEN
-		eStateSystem := E_StateSystem.Enable ;
-	ELSIF NOT ibSystemSafetyOK THEN
-		IF eStateSystem > E_StateSystem.Idle THEN
-			eStateSystem := E_StateSystem.Idle ;
-		ELSE
-			eStateSystem := E_StateSystem.Enable ;
-		END_IF
-	END_IF
-ELSE 
-	IF GVL_Message.bResetFaults OR fbCmdResetSafety.bFeStatus THEN
-		bResetDone := FALSE;
-		bResetting := TRUE ;
-	ELSIF fbCmdPowerOff.bFcoDelay THEN 
-		eStateSystem := E_StateSystem.PowerOff ;
-	END_IF
-END_IF
-
-// add manual function	
-	
 // State machine 
 CASE eStateSystem OF 
 	E_StateSystem.NoReference:
+		// Reset HMI state
 		HMI_Library.GVL_HMI.bCmdSemiAuto 	:= FALSE;
 		HMI_Library.GVL_HMI.bCmdAutomatic	:= FALSE;
+		HMI_Library.GVL_HMI.bCmdSettings	:= FALSE;
+		HMI_Library.GVL_HMI.bCmdManual		:= FALSE;
+		HMI_Library.GVL_HMI.bCmdParemeter	:= FALSE;
+		HMI_Library.GVL_HMI.eShownScreen	:= E_BaseVisu.Idle;
 		bHomed			:= FALSE ;
 		bEnabled		:= FALSE ;
-		IF NOT bReferenceOk THEN
-			; 
-		ELSIF NOT bFatalFault AND NOT binitialized THEN 
+		IF bReferenceOk THEN
 			eStateSystem 	:= E_StateSystem.Initialize ;
-		ELSIF NOT bFatalFault THEN 
-			eStateSystem 	:= E_StateSystem.LoadParameters ;
 		END_IF
 	E_StateSystem.Initialize:
 		IF Init() THEN
@@ -615,50 +623,59 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.LoadParameters:
 		IF GVL_Parameters.fbParameterHandler.Init() THEN
-			eStateSystem := E_StateSystem.Enable ;
+			eStateSystem := E_StateSystem.Safe ;
 		ELSIF GVL_Parameters.fbParameterHandler.bError THEN 
 			eStateSystem := E_StateSystem.NoReference ;
 		END_IF
+	E_StateSystem.Safe:
+		IF bIsSafe 
+		AND bSystemOK THEN 
+			bSafeStopping 	:= FALSE ;
+			eStateSystem 	:= E_StateSystem.Enable;
+		ELSE 
+			ExecSafeStop();
+		END_IF
 	E_StateSystem.Enable:
+		bEnabling 	:= bSystemOK;
 		IF GVL_HMI.bCmdManual THEN
 			eStateSystem := E_StateSystem.Manual ;
-		ELSIF bEnabled AND bSystemOK THEN 
+		ELSIF bEnabled THEN 
 			fbCmdStartSystem.CmdBlinkFast();
 			IF fbCmdStartSystem.bFeStatus THEN
 				eStateSystem := E_StateSystem.Home ;
 			END_IF
-		ELSIF bFatalFault THEN 
-			bEnabling	:= FALSE ;
-		ELSE
-			bEnabling 	:= bSystemOK;
 		END_IF
 	E_StateSystem.Home:	
 		IF ExecHoming() THEN
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
 	E_StateSystem.Reset:
-		IF bResetDone AND bHomed THEN
-			eStateSystem := E_StateSystem.Idle ;
-		ELSIF bResetDone THEN 
-			eStateSystem := E_StateSystem.Enable ;
-		ELSE
+		IF NOT bResetDone THEN 
 			bResetting S= TRUE ;
+		ELSIF bHomed THEN
+			eStateSystem := E_StateSystem.Idle ;
+		ELSE 
+			eStateSystem := E_StateSystem.Enable ;
 		END_IF
 	E_StateSystem.Idle:
 		fbCmdStartSystem.CmdBlinkSlow();
 		IF GVL_HMI.bCmdManual THEN 
 			eStateSystem := E_StateSystem.Manual ;
-		ELSIF bSystemOK AND bStartAuto THEN
-			eStateSystem := E_StateSystem.Automatic ;
-		ELSIF bSystemOK AND bStartSemiAuto THEN 
+		ELSIF bSystemOK AND fbCmdStartSystem.bFeStatus THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
-		ELSIF bSystemOK AND GVL_DevManual.bManualModeActive THEN
-			eStateSystem	:= E_StateSystem.Manual ;
 		END_IF
+	E_StateSystem.Manual:
+		IF GVL_DevManual.bManualModeActive THEN
+			ExecManual();
+		END_IF
+		
+		IF NOT GVL_HMI.bCmdManual THEN
+			EStateSystem := E_StateSystem.Enable;
+		END_IF 
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
 		GVL_HMI.bCmdSemiAuto 	:= TRUE;
-		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFcoInputActive THEN 
+		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFeStatus THEN 
 			bStartAuto 		:= TRUE ;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
@@ -668,7 +685,7 @@ CASE eStateSystem OF
 		IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
 			eStateSystem := E_StateSystem.Idle ;
 		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus THEN  
-			eStateSystem := E_StateSystem.SemiAuto ;
+			bCmdPause 	:= NOT bPaused ;
 		ELSIF bAutomatic THEN 
 			fbCmdStartAuto.CmdOn();
 		ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
@@ -676,13 +693,16 @@ CASE eStateSystem OF
 		ELSE 
 			fbCmdStartAuto.CmdBlinkFast(); 				
 		END_IF
-	E_StateSystem.Manual:
-		IF GVL_DevManual.bManualModeActive THEN
-			ExecManual();
-		END_IF
-		
-		IF NOT GVL_HMI.bCmdManual THEN
-			EStateSystem := E_StateSystem.Enable;
+	E_StateSystem.Fault:
+		IF (GVL_Message.bResetFaults 
+		OR fbCmdResetSafety.bFeStatus)
+		THEN
+			bResetDone		:= FALSE ;
+			eStateSystem 	:= E_StateSystem.Reset ;
+		ELSIF bFatalFault THEN 
+			ExecSafeStop();
+		ELSIF bCycleFault THEN 
+			ExecSafeHold();	
 		END_IF 
 	E_StateSystem.PowerOff:
 		ExecPowerOff();
