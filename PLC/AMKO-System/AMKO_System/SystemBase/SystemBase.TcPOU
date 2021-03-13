@@ -182,10 +182,10 @@ bPaused 		:= TRUE;
 // copy inputs to modules 
 FOR i := 1 TO nNumberOfModules DO 
 	// set system commands
-	arpModules[i].pFunction^.bEnable			:= bEnabled		;
-	arpModules[i].pFunction^.bCmdReset			:= bResetting	;
-	arpModules[i].pFunction^.bSafetyOK			:= bSafeStopping;
-	arpModules[i].pFunction^.bCmdPause			:= bCmdPause	; 
+	arpModules[i].pFunction^.bEnable			:= bEnabled			;
+	arpModules[i].pFunction^.bCmdReset			:= bResetting		;
+	arpModules[i].pFunction^.bSafetyOK			:= NOT bSafeStopping;
+	arpModules[i].pFunction^.bCmdPause			:= bCmdPause		; 
 	// Read state indications 
 	bReferenceOk 	:= arpModules[i].pFunction^.bReferenceOk 	AND bReferenceOk; 
 	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe		;
@@ -492,7 +492,9 @@ THEN
 ELSE 
 	bSafetyOK				:= FALSE ;
 	GVL_HMI.bEstopActive 	:= TRUE ;
-	eStateSystem			:= E_StateSystem.Safe ;
+	IF binitialized THEN 
+		eStateSystem			:= E_StateSystem.Safe ;
+	END_IF
 END_IF
 
 // Set safety state and button light state
