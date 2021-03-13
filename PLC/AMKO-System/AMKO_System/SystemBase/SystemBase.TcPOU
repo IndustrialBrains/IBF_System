@@ -700,6 +700,7 @@ CASE eStateSystem OF
 		OR fbCmdResetSafety.bFeStatus)
 		THEN
 			bResetDone		:= FALSE ;
+			bSafeStopping 	:= FALSE ;
 			eStateSystem 	:= E_StateSystem.Reset ;
 		ELSIF bFatalFault THEN 
 			ExecSafeStop();
