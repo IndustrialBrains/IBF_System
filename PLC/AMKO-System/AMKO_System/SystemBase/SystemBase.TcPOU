@@ -287,7 +287,7 @@ ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 	bSystemOK := fbAirpressureOk.bFcoDelay 	AND bSystemOK ;
 	bSystemOK := bSafetyOK					AND bSystemOK ;	
 				
-	IF NOT bSystemOK THEN
+	IF NOT bSystemOK AND eStateSystem >= E_StateSystem.Safe THEN
 		eStateSystem := E_StateSystem.Safe; 
 	ELSIF (bFatalFault OR bCycleFault) AND eStateSystem <> E_StateSystem.Reset THEN 
 		eStateSystem := E_StateSystem.Fault ;
@@ -493,7 +493,7 @@ THEN
 ELSE 
 	bSafetyOK				:= FALSE ;
 	GVL_HMI.bEstopActive 	:= TRUE ;
-	IF binitialized THEN 
+	IF eStateSystem > E_StateSystem.Safe THEN 
 		eStateSystem			:= E_StateSystem.Safe ;
 	END_IF
 END_IF
