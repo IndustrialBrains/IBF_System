@@ -172,7 +172,7 @@ bHeld			:= TRUE ;
 bResetDone 		S= bResetting	;
 bManual			:= TRUE	;
 bSemiAuto		:= TRUE ;
-bAutomatic		:= FALSE;
+bAutomatic		:= FALSE; // Reverse feedback 
 AllAutomatic 	:= TRUE ;
 bEnabled		S= bEnabling ;
 bPowerdOff		:= TRUE;
@@ -689,11 +689,14 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Idle ;
 		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus THEN  
 			bCmdPause 	:= NOT bPaused ;
-		ELSIF bAutomatic THEN 
-			fbCmdStartAuto.CmdOn();
 		ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
-		ELSE 
+		END_IF
+		
+		// Start button light control
+		IF bAutomatic THEN 
+			fbCmdStartAuto.CmdOn();
+		ELSE
 			fbCmdStartAuto.CmdBlinkFast(); 				
 		END_IF
 	E_StateSystem.Fault:
