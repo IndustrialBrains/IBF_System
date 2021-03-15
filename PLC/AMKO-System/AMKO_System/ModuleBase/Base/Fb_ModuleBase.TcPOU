@@ -25,6 +25,7 @@ VAR_OUTPUT
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
 	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
+	bReqPause		: BOOL := FALSE ; // Request for auto cycle pause
 
 	// Check values
 	bReferenceOk	: BOOL := FALSE ; // All module references  have been checked
@@ -84,7 +85,8 @@ ELSE
 	ExecMainBaseFunctions();
 END_IF
 
-]]></ST>
+// Reset pause request 
+bReqPause R= bPaused ;]]></ST>
     </Implementation>
     <Folder Name="Commands" Id="{23a18ca6-8b05-47e8-8c4b-aa1afa1e892a}" />
     <Folder Name="Execute" Id="{f0dd53fd-6b62-4b4d-9761-2507a7488bb2}" />

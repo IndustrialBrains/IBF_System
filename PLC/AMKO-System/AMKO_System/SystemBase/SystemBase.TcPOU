@@ -197,8 +197,9 @@ FOR i := 1 TO nNumberOfModules DO
 	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff	;
 	bHomed			:= arpModules[i].pFunction^.bHomed			AND bHomed 		;
 	bPaused			:= arpModules[i].pFunction^.bPaused			AND bPaused		;
-	bAutomatic		S= arpModules[i].pFunction^.bAutomatic ; // Stay in automatic even when one module is in automatic
-	AllAutomatic	:= arpModules[i].pFunction^.bAutomatic 		AND AllAutomatic ; // reset start automatic when al modules are in automatic operation
+	bCmdPause		S= arpModules[i].pFunction^.bReqPause						; // Request for pause from module
+	bAutomatic		S= arpModules[i].pFunction^.bAutomatic 						; // Stay in automatic even when one module is in automatic
+	AllAutomatic	:= arpModules[i].pFunction^.bAutomatic 		AND AllAutomatic; // reset start automatic when al modules are in automatic operation
 END_FOR
 
 // Reset start inputs
@@ -209,7 +210,7 @@ END_FOR
 	bPoweringOff	R= bPowerdOff 	;
 	bHoming			R= bHomed 		;
 	bStartAuto		R= AllAutomatic	; 
-	bCmdPause		R= NOT bAutomatic ;
+	bCmdPause		R= bPaused		;
 ]]></ST>
       </Implementation>
     </Method>
