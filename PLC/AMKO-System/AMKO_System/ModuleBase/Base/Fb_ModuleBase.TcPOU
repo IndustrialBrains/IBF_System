@@ -262,7 +262,6 @@ END_VAR
 	
 	IF bFatalFault THEN
 		ExecSafeStop()	;
-		bHomed			:= FALSE;
 	ELSIF bCycleFault THEN
 		bHeld			S= ExecHold();
 		bHolding 		:= NOT bHeld ;

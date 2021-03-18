@@ -225,8 +225,10 @@ GVL_Parameters.fbParameterHandler();
 GVL_DevManual.fbManualControler();
 
 // Execute button functions 
-fbStartAuto		( refFbFault := fbFaultHandler );
-fbStartSemiAuto ( refFbFault := fbFaultHandler ); 
+fbStartAuto		( 	tDelay	:= T#100MS,
+					refFbFault := fbFaultHandler );
+fbStartSemiAuto ( 	tDelay	:= T#100MS,
+					refFbFault := fbFaultHandler ); 
 
 fbCmdStartSystem(refFbFault := fbFaultHandler);
 fbCmdStartAuto	(refFbFault := fbFaultHandler);
@@ -255,9 +257,12 @@ END_VAR
         <ST><![CDATA[// ===== full reset ======
 	IF fbCmdResetSafety.bFcoDelay THEN 
 		eStateSystem 	:= E_StateSystem.NoReference ;
-	ELSIF fbCmdResetSafety.bFeStatus 
-	AND eStateSystem <> E_StateSystem.Fault THEN 
-		eStateSystem	:= E_StateSystem.Idle ;
+	ELSIF fbCmdResetSafety.bFeStatus THEN
+		IF  eStateSystem = E_StateSystem.Fault OR eStateSystem = E_StateSystem.Idle THEN 
+			eStateSystem	:= E_StateSystem.Reset ;
+		ELSE 
+			eStateSystem	:= E_StateSystem.Idle ;
+		END_IF
 	END_IF
 
 // ====== power off ======
@@ -365,12 +370,14 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Run automatic function in 
-FOR i := 1 TO nNumberOfModules DO 
-	arpModules[i].pFunction^.CmdAutomatic() ;
-END_FOR
-
-ExecAutomatic := bAutomatic;]]></ST>
+        <ST><![CDATA[IF bStartAuto THEN 
+	// Run automatic function in 
+	FOR i := 1 TO nNumberOfModules DO 
+		arpModules[i].pFunction^.CmdAutomatic() ;
+	END_FOR
+END_IF
+	
+ExecAutomatic := NOT bStartAuto;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHoming" Id="{345df0e0-469c-4aba-9303-ad14c7d3f6d3}" FolderPath="ModuleFunctions\">
@@ -678,7 +685,7 @@ CASE eStateSystem OF
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
 		GVL_HMI.bCmdSemiAuto 	:= TRUE;
-		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFeStatus THEN 
+		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFcoDelay THEN 
 			bStartAuto 		:= TRUE ;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
