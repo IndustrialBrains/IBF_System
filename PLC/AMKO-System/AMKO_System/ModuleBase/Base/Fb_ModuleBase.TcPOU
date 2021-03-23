@@ -111,12 +111,13 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="CheckReferences" Id="{fd109a63-20a0-4b77-ba3e-d36429660f9a}" FolderPath="Execute\">
-      <Declaration><![CDATA[METHOD PUBLIC ABSTRACT CheckReferences : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CheckReferences : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[]]></ST>
+        <ST><![CDATA[bReferenceOk := TRUE;
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdAutomatic" Id="{12a5af10-cb9c-42e0-8f13-2adc898b5d5a}" FolderPath="Commands\">
