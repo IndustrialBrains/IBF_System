@@ -3,6 +3,9 @@
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
+VAR_INPUT // System configuration settings
+	bIcfAirCheckPresent	: BOOL := TRUE; // System is not equiped with air pressure sensor 	
+END_VAR
 VAR	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
@@ -71,10 +74,10 @@ VAR
 	fbCmdPowerOff				: FB_DevHMIButton 				; // Power off system
 	
 	//System state
-	bSafetyOK					: BOOL := false ;
+	bSafetyOK					: BOOL := FALSE ;
+	bAirOk						: BOOL := FALSE ; // Air pressure is ok 
 	bSystemOK					: BOOL := FALSE ; // all safety and vitals are OK
 	eStateSystem				: E_StateSystem := E_StateSystem.NoReference ; // State of system
-
 	// Set system variables
 	fbSetSystemVariables		: Fb_SystemVariables ;
 	
@@ -236,14 +239,15 @@ fbStartSemiAuto ( 	tDelay	:= T#100MS,
 fbCmdStartSystem(refFbFault := fbFaultHandler);
 fbCmdStartAuto	(refFbFault := fbFaultHandler);
 // execute input functions
-fbAirpressureOk(refFbFault := fbFaultHandler);
 fbValveMainAirSupply(	bEnable		:= TRUE,
 						bSafetyOk	:= ibEstopOk,
 						refFbFault 	:= fbFaultHandler);
 
 // Add device functions to manual controller 
 IF NOT bDevicesAddedtoManual THEN
-	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbAirpressureOk 	);
+	IF bIcfAirCheckPresent THEN
+		GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbAirpressureOk 	);
+	END_IF
 	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartSystem	);
 	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartAuto		);
 	GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdResetSafety	);
@@ -287,13 +291,19 @@ END_VAR
 fTrigPowerSupply(CLK := ibPowerSupplyOk);
 ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 
-// ===== Fault state =====
+// ===== Check Air pressure =====
+IF bIcfAirCheckPresent THEN
+	fbAirpressureOk(refFbFault := fbFaultHandler);
+	bAirOk := fbAirpressureOk.bFcoDelay ;
+ELSE
+	bAirOk := TRUE ;
+END_IF
+
 
 // ===== Check if system is ok =====
 	bSystemOK := TRUE ;
-	bSystemOK := ibPowerSupplyOk 			AND bSystemOK ;
-	bSystemOK := fbAirpressureOk.bFcoDelay 	AND bSystemOK ;
-	bSystemOK := bSafetyOK					AND bSystemOK ;	
+	bSystemOK := bAirOk 	AND bSystemOK ;
+	bSystemOK := bSafetyOK	AND bSystemOK ;	
 				
 	IF NOT bSystemOK AND eStateSystem >= E_StateSystem.Safe THEN
 		eStateSystem := E_StateSystem.Safe; 
@@ -302,7 +312,7 @@ ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 	END_IF
 
 // ===== System messages ======
-	IF NOT fbAirpressureOk.bFcoDelay THEN
+	IF NOT bAirOk THEN
 		stMessage.Active 		:= TRUE ;
 		stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
 		stMessage.Discription	:= 'Main air Pressure low ';
@@ -312,17 +322,6 @@ ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
 		stMessage.nModuleID		:= 0;
 	END_IF
-
-	IF NOT ibPowerSupplyOk THEN 
-		stMessage.Active 		:= TRUE ;
-		stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-		stMessage.Discription	:= '24V power supply low ';
-		stMessage.LocationName	:= '24V Main supply';
-		stMessage.LocationNumber:= 1;
-		stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
-		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
-		stMessage.nModuleID		:= 0;
-	END_IF 	
 	
 // Main air control 
 toffMainAir(IN := bSystemOK);
@@ -516,7 +515,7 @@ IF NOT ibEstopOk THEN
 	fbCmdResetSafety.CmdOn() ;
 ELSIF NOT ibSystemSafetyOK OR iSTOFault THEN 
 	fbCmdResetSafety.CmdBlinkSlow() ;
-ELSIF NOT fbAirpressureOk.bFcoDelay OR NOT bSystemOK THEN
+ELSIF NOT bAirOk OR NOT bSystemOK THEN
 	fbCmdResetSafety.CmdBlinkFast() ;
 END_IF
 
@@ -531,7 +530,8 @@ qbResetSafety := fbCmdResetSafety.bFeStatus ;
 IF NOT iGeneralSafetyFault 
 // AND NOT iSTOFault 
 AND NOT iEstopFunctionFault
-AND NOT iSystemSafetyFault THEN 
+AND NOT iSystemSafetyFault 
+AND binitialized THEN 
 	qbRunSafety := TRUE ;
 ELSE 
 	qbRunSafety := FALSE;
@@ -755,8 +755,11 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// initialize system functions
-fbAirpressureOk.Init	( 	nId 		:= 1,
-							nParentId	:= 1 );
+IF bIcfAirCheckPresent THEN
+	fbAirpressureOk.Init	( 	nId 		:= 1,
+								nParentId	:= 1 );
+END_IF 
+
 fbCmdResetSafety.Init	(	nId 		:= 2,
 							nParentId	:= 1 );
 
