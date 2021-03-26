@@ -524,7 +524,7 @@ END_IF
 fbCmdResetSafety(refFbFault := fbFaultHandler); 
 
 // Link Safetty Reset
-qbResetSafety := fbCmdResetSafety.bFeStatus ;
+qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
 
 // Set safety system in run mode
 IF NOT iGeneralSafetyFault 
