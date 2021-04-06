@@ -712,7 +712,7 @@ CASE eStateSystem OF
 		Gvl_HMI.bCmdAutomatic := TRUE;
 		IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
 			eStateSystem := E_StateSystem.Idle ;
-		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus THEN  
+		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus OR bMissingCond THEN  
 			bCmdPause 	:= NOT bPaused ;
 		ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
