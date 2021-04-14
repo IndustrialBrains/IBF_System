@@ -4,7 +4,7 @@
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
 VAR_INPUT // System configuration settings
-	bIcfAirCheckPresent	: BOOL := TRUE; // System is not equiped with air pressure sensor 	
+	bIcfAirCheckPresent	: BOOL := TRUE; // System is not equiped with air pressure sensor 
 END_VAR
 VAR	// Fault indications
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
@@ -541,12 +541,12 @@ END_IF
 TofSafetyErrAck	(IN := qbSafetyErrAckn	);
 TOfSTOErrAck	(IN := qbSTOErrAckn 	);
 qbSTOErrAckn	:= FALSE ;
+qbSafetyErrAckn := FALSE ;
+
 IF iGeneralSafetyFault THEN 
 	GVL_HMI.sCmdEstopText 	:= 'Safety Program fault';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE; 
-	ELSE 
-		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stMessage.Active := TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
@@ -556,11 +556,10 @@ IF iGeneralSafetyFault THEN
 	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
+	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state. Check wiring ';
 ELSIF iEstopFunctionFault THEN
 	GVL_HMI.sCmdEstopText 	:= 'Safety button fault check button wiring';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE ;
-	ELSE 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stMessage.Active 		:= TRUE ;
@@ -571,12 +570,11 @@ ELSIF iEstopFunctionFault THEN
 	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
+	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check emergency button wiring ';
 ELSIF iSystemSafetyFault THEN
 // System safety function faults 
 	GVL_HMI.sCmdEstopText 	:= 'Collision detection Fault check sensor wiring';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE ;
-	ELSE 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stMessage.Active 		:= TRUE ;
@@ -587,6 +585,7 @@ ELSIF iSystemSafetyFault THEN
 	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
+	GVL_HMI.sCmdEstopText 	:= 'System safety fault, check wiring ';
 ELSIF iSTOFault THEN
 	GVL_HMI.sCmdEstopText 	:= 'Motor safety fault';
 	qbSTOErrAckn 			:= Sys_Variables.HeartBeat ;
@@ -598,6 +597,7 @@ ELSIF iSTOFault THEN
 	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
+	GVL_HMI.sCmdEstopText 	:= 'Motor safe torque off fault';
 ELSIF NOT ibEstopOk THEN
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop pressed';
 ELSIF NOT ibSystemSafetyOK THEN 
@@ -703,7 +703,9 @@ CASE eStateSystem OF
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
 		GVL_HMI.bCmdSemiAuto 	:= TRUE;
-		IF fbCmdStartAuto.bFeStatus OR fbStartAuto.bFcoDelay THEN 
+		IF fbCmdStartAuto.bFeStatus 
+		OR fbStartAuto.bFcoDelay 
+		OR bAutomatic	THEN 
 			bStartAuto 		:= TRUE ;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
