@@ -311,6 +311,9 @@ END_IF
 		eStateSystem := E_StateSystem.Fault ;
 	END_IF
 
+// ===== release system stop =====
+bSafeStopping 	R= bIsSafe AND bSystemOK 		;
+	
 // ===== System messages ======
 	IF NOT bAirOk THEN
 		stMessage.Active 		:= TRUE ;
@@ -520,6 +523,7 @@ ELSIF NOT bAirOk OR NOT bSystemOK THEN
 END_IF
 
 
+
 // Safety reset button function
 fbCmdResetSafety(refFbFault := fbFaultHandler); 
 
@@ -658,7 +662,6 @@ CASE eStateSystem OF
 	E_StateSystem.Safe:
 		IF bIsSafe 
 		AND bSystemOK THEN 
-			bSafeStopping 	:= FALSE ;
 			eStateSystem 	:= E_StateSystem.Enable;
 		ELSE 
 			ExecSafeStop();
@@ -731,7 +734,6 @@ CASE eStateSystem OF
 		OR fbCmdResetSafety.bFeStatus)
 		THEN
 			bResetDone		:= FALSE ;
-			bSafeStopping 	:= FALSE ;
 			eStateSystem 	:= E_StateSystem.Reset ;
 		ELSIF bFatalFault THEN 
 			ExecSafeStop();
