@@ -525,7 +525,8 @@ END_IF
 
 
 // Safety reset button function
-fbCmdResetSafety(refFbFault := fbFaultHandler); 
+fbCmdResetSafety(	tDelay		:= T#30S ,
+					refFbFault 	:= fbFaultHandler); 
 
 // Link Safetty Reset
 qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
