@@ -39,7 +39,7 @@ VAR_OUTPUT
 	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
 	
 	bResetDone 		: BOOL := FALSE ; // Module reset is done   
-
+	
 	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual
 	bSemiAuto		: BOOL := FALSE ; // Module work status in semi automatic
 	bStartAuto		: BOOL := FALSE ; // Module start automatic cycle 
@@ -53,6 +53,7 @@ END_VAR
 VAR 
 	// Internal functions 
 	ReCmdReset 			: R_TRIG ;
+	TofResetCmd			: TOF ;
 	// manual functions 
 	bParametersAdded	: BOOL := FALSE ;
 	// Persistent data
@@ -242,27 +243,9 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Call message function
-	fbFaultHandler(bReset := bCmdReset);
-
-// Call reset functions
-	ReCmdReset( CLK := bCmdReset);
-	
-	IF ReCmdReset.Q THEN 
-		bResetDone := FALSE ;
-	ELSIF NOT bResetDone THEN 
-		fbFaultHandler.bReset := TRUE ;
-		IF binitialized THEN
-			bResetDone := ExecReset();
-		ELSE
-			bResetDone := TRUE ;		
-		END_IF
-	END_IF
-	
-	bCmdReset := FALSE ;
-// add message if active
+	fbFaultHandler();
 	fbFaultHandler.CmdAddFault( stFault := stMessage );
 
-	
 	bFatalFault := fbFaultHandler.bActFF ;
 	bCycleFault := fbFaultHandler.bActCF ;
 	
@@ -272,6 +255,23 @@ END_VAR
 		bHeld			S= ExecHold();
 		bHolding 		:= NOT bHeld ;
 	END_IF
+
+// Call reset functions
+	ReCmdReset( CLK := bCmdReset);
+	
+	IF ReCmdReset.Q THEN 
+		bResetDone := FALSE ;
+	ELSIF NOT bResetDone THEN 
+		IF binitialized THEN
+			bResetDone := ExecReset() AND fbFaultHandler.CmdReset();
+		ELSE
+			bResetDone := TRUE ;		
+		END_IF
+	END_IF
+	
+	bCmdReset := FALSE ;
+
+	
 
 // Reset safe state when enable is active
 	bIsSafe R= bSafetyOK ;
