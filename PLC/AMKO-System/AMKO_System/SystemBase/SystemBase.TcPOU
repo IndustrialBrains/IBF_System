@@ -125,6 +125,10 @@ VAR // safety
 END_VAR
 VAR // Miscellaneous
 	bFirstCycle : BOOL := TRUE; // Is this the first time the PRG is called?
+	bPersistentDataFail	: BOOL := TRUE ;
+END_VAR
+VAR PERSISTENT // Persistent data check
+	bPersistentFlag	: BOOL := FALSE ; // Persistent dat in tack flag
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Exec safety control
