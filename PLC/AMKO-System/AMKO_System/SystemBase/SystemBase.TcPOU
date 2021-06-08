@@ -58,8 +58,8 @@ VAR
 	fbAirpressureOk 			: Fb_DevDigitalInputFunctions  	; // system airpressure is ok
 	fbCmdResetSafety		 	: FB_DevPushbuttonLight 		; // System reset
 	
-	fTrigPowerSupply	: F_TRIG ; // falling edge trigger for power supply
-	toffMainAir			: TOF	:= (PT := T#500ms ); // Main air supply off delay
+	fTrigPowerSupply			: F_TRIG ; // falling edge trigger for power supply
+	toffMainAir					: TOF	:= (PT := T#500MS ); // Main air supply off delay
 	// System safety valve
 	fbValveMainAirSupply		: FB_DevValve ; // Main air supply valve 
 	
@@ -86,7 +86,7 @@ VAR
 	fbOperatorMessage			: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
 
 	// Local Fault Handling
-	fbFaultHandler				: 	Fb_FaultHandler 		; // Fault handler 
+	fbFaultHandler				: Fb_FaultHandler 		; // Fault handler 
 	stMessage					: UDT_Fault			; // Message data
 
  	// Module states
@@ -237,16 +237,21 @@ Device_Library.GVL_DevManual.fbManualControler();
 
 // Execute button functions 
 fbStartAuto		( 	tDelay			:= T#100MS,
+					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler );
 fbStartSemiAuto ( 	tDelay			:= T#100MS,
+					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler ); 
 
-fbCmdStartSystem(refFbFault := fbFaultHandler);
-fbCmdStartAuto	(refFbFault := fbFaultHandler);
+fbCmdStartSystem(	refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler);
+fbCmdStartAuto	(	refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler);
 // execute input functions
-fbValveMainAirSupply(	bEnable		:= TRUE,
-						bSafetyOk	:= ibEstopOk,
-						refFbFault 	:= fbFaultHandler);
+fbValveMainAirSupply(	bEnable			:= TRUE,
+						bSafetyOk		:= ibEstopOk,
+						refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+						refFbFault 		:= fbFaultHandler);
 
 // Add device functions to manual controller 
 IF NOT bDevicesAddedtoManual THEN
@@ -300,7 +305,8 @@ ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
 
 // ===== Check Air pressure =====
 IF bIcfAirCheckPresent THEN
-	fbAirpressureOk(refFbFault := fbFaultHandler);
+	fbAirpressureOk(refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler);
 	bAirOk := fbAirpressureOk.bFcoDelay ;
 ELSE
 	bAirOk := TRUE ;
@@ -532,8 +538,9 @@ END_IF
 
 
 // Safety reset button function
-fbCmdResetSafety(	tDelay		:= T#30S ,
-					refFbFault 	:= fbFaultHandler); 
+fbCmdResetSafety(	tDelay			:= T#30S ,
+					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler); 
 
 // Link Safetty Reset
 qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
@@ -704,7 +711,7 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.SemiAuto ;
 		END_IF
 	E_StateSystem.Manual:
-		IF GVL_DevManual.bManualModeActive THEN
+		IF Device_Library.GVL_DevManual.bManualModeActive THEN
 			ExecManual();
 		END_IF
 		
