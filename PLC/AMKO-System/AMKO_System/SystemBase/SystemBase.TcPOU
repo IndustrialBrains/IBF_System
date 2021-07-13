@@ -776,22 +776,22 @@ END_VAR
         <ST><![CDATA[// initialize system functions
 IF bIcfAirCheckPresent THEN
 	fbAirpressureOk.Init	( 	nId 		:= 1,
-								nParentId	:= 1 );
+								nParentId	:= 0 );
 END_IF 
 
 fbCmdResetSafety.Init	(	nId 		:= 2,
-							nParentId	:= 1 );
+							nParentId	:= 0 );
 
 fbValveMainAirSupply.Init(	nId			:= 3,
-							nParentId	:= 1,
+							nParentId	:= 0,
 							eResetState	:= E_ValveResetState.Res_Closed,
 							eSafeState	:= E_ValveResetState.Res_Closed);
 
 fbCmdStartSystem.Init	( 	nId 		:= 4,
-							nParentId	:= 1 );
+							nParentId	:= 0 );
 
 fbCmdStartAuto.Init		( 	nId 		:= 5,
-							nParentId	:= 1 );
+							nParentId	:= 0 );
 							
 // Initialize all modules
 binitialized	:= TRUE ;
