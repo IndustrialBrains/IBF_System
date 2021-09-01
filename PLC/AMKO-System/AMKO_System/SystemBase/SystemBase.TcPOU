@@ -338,7 +338,7 @@ bSafeStopping 	R= bIsSafe AND bSystemOK 		;
 		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
 		stMessage.nModuleID		:= 0;
 		GVL_HMI.bEstopActive 	:= TRUE ;
-		GVL_HMI.sCmdEstopText 	:= 'Emergency stop pressed';
+		GVL_HMI.sCmdEstopText 	:= 'AIR PRESSURE LOW';
 	END_IF
 	
 // Main air control 
