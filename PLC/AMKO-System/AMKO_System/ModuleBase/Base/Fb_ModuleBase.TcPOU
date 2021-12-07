@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
   <POU Name="Fb_ModuleBase" Id="{e3f07cb2-eb83-4b34-9aad-2d4595c2aa5d}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK PUBLIC ABSTRACT Fb_ModuleBase
@@ -49,6 +49,7 @@ VAR_OUTPUT
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
 	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
 
+	bLocked			: BOOL := false ; // module is locked for commands
 END_VAR
 VAR 
 	// Internal functions 

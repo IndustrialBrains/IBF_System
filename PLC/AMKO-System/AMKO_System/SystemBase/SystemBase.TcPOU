@@ -50,6 +50,7 @@ VAR	// Fault indications
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
 	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
 
+	bModuleLocked	: BOOL := false ; // a module is locked for commands
 END_VAR
 VAR
 	// System inputs 
@@ -207,6 +208,7 @@ FOR i := 1 TO nNumberOfModules DO
 	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff	;
 	bHomed			:= arpModules[i].pFunction^.bHomed			AND bHomed 		;
 	bPaused			:= arpModules[i].pFunction^.bPaused			AND bPaused		;
+	bModuleLocked	S= arpModules[i].pFunction^.bLocked							; // Module is locked for commnds
 	bCmdPause 		R= arpModules[i].pFunction^.bReqContinue					; // Request continue from module
 	bCmdPause		S= arpModules[i].pFunction^.bReqPause						; // Request for pause from module
 	bAutomatic		S= arpModules[i].pFunction^.bAutomatic 						; // Stay in automatic even when one module is in automatic
@@ -698,7 +700,11 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
 	E_StateSystem.Reset:
-		IF NOT bResetDone THEN 
+		IF (GVL_Message.bResetFaults 
+		OR fbCmdResetSafety.bFeStatus)
+		THEN
+			bResetting := FALSE ;
+		ELSIF NOT bResetDone THEN 
 			bResetting S= TRUE ;
 		ELSIF bHomed THEN
 			eStateSystem := E_StateSystem.Idle ;
@@ -723,9 +729,10 @@ CASE eStateSystem OF
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
 		GVL_HMI.bCmdSemiAuto 	:= TRUE;
-		IF fbCmdStartAuto.bFeStatus 
+		IF (fbCmdStartAuto.bFeStatus 
 		OR fbStartAuto.bFcoDelay 
-		OR bAutomatic	THEN 
+		OR bAutomatic)
+		AND NOT bModuleLocked THEN 
 			bStartAuto 		:= TRUE ;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
@@ -763,6 +770,7 @@ CASE eStateSystem OF
 		;		
 END_CASE
 
+bModuleLocked := FALSE ;
 ]]></ST>
       </Implementation>
     </Method>
