@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
@@ -138,6 +138,7 @@ ExecSafetyControl();
 // Call faulthandler
 fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						arpModules			:= arpModules,
+						bsystemInitialized	:= binitialized,
 						bSystemFF			=> bFatalFault,
 						bSystemCF			=> bCycleFault,
 						bSystemMC			=> bMissingCond);
