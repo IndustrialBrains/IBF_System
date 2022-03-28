@@ -65,13 +65,15 @@ END_IF
 IF bsystemInitialized THEN
 	// set system fault bits 
 	ExecSetFaultBit(); 
-	// Message Screen controller 
-	ExecScreenControl();
 	// Log faults when they are reset
 	ExecMessageCompare();
 	// Logfile writer 
 	ExecWriteToLog();
-END_IF]]></ST>
+END_IF
+
+// Message Screen controller 
+ExecScreenControl();
+]]></ST>
     </Implementation>
     <Folder Name="Private" Id="{d1168527-87de-49aa-89b2-4e5f63714071}" />
     <Method Name="CheckForModuleFaults" Id="{4b59df83-3910-4127-9da2-0705efc500b2}" FolderPath="Private\">
@@ -147,7 +149,6 @@ END_VAR
 
 // Set screen control 
 IF bSystemCF OR bSystemFF THEN 
-	GVL_Message.bHideFaults := FALSE ;
 	GVL_Message.bHideReset	:= FALSE ; 
 ELSIF bSystemMC AND NOT tofSnoozeMessages.Q THEN 
 	GVL_Message.bHideFaults := FALSE ;
