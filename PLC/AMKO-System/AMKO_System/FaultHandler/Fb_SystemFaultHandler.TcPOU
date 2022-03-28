@@ -149,6 +149,7 @@ END_VAR
 
 // Set screen control 
 IF bSystemCF OR bSystemFF THEN 
+	GVL_Message.bHideFaults := FALSE ;
 	GVL_Message.bHideReset	:= FALSE ; 
 ELSIF bSystemMC AND NOT tofSnoozeMessages.Q THEN 
 	GVL_Message.bHideFaults := FALSE ;
