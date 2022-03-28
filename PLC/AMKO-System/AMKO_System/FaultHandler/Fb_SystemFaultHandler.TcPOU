@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
   <POU Name="Fb_SystemFaultHandler" Id="{63d9dbdb-7a1d-43ad-9d1e-008ba0d86cdf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL Fb_SystemFaultHandler
 VAR_INPUT
 	nNumberOfModules	: UDINT := 0; // Number of modules connected to the system fault handler
+	bsystemInitialized	: BOOL 	; // System init is done
 END_VAR
 VAR_IN_OUT
 	arpModules			: ARRAY [1..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ;
@@ -61,15 +62,16 @@ END_VAR]]></Declaration>
 	CheckForModuleFaults();
 END_IF
 
-// set system fault bits 
-ExecSetFaultBit(); 
-// Message Screen controller 
-ExecScreenControl();
-// Log faults when they are reset
-ExecMessageCompare();
-// Logfile writer 
-ExecWriteToLog();
-]]></ST>
+IF bsystemInitialized THEN
+	// set system fault bits 
+	ExecSetFaultBit(); 
+	// Message Screen controller 
+	ExecScreenControl();
+	// Log faults when they are reset
+	ExecMessageCompare();
+	// Logfile writer 
+	ExecWriteToLog();
+END_IF]]></ST>
     </Implementation>
     <Folder Name="Private" Id="{d1168527-87de-49aa-89b2-4e5f63714071}" />
     <Method Name="CheckForModuleFaults" Id="{4b59df83-3910-4127-9da2-0705efc500b2}" FolderPath="Private\">
