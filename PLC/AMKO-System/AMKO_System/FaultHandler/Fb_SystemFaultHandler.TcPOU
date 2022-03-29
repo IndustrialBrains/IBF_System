@@ -17,7 +17,6 @@ VAR_OUTPUT
 END_VAR
 VAR
 	// Message variables
-	bResetFaults		: REFERENCE TO BOOL 	:= GVL_Message.bResetFaults		; // Reset system faults 
 	bCmdSnoozeMessage	: REFERENCE TO BOOL  	:= GVL_Message.bCmdSnoozeMessage; // Snooze message display
 	arActiveFaults 		: REFERENCE TO ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault := GVL_Message.arActiveFaults ; // Active faults overview for showing in HMI
 	arOldFaults 		: ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault ; // Old faults overview for comparing to active

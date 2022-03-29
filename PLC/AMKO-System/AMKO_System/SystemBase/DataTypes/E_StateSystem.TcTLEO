@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
   <EnumerationTextList Name="E_StateSystem" Id="{e1b3949c-1926-4ece-ac62-019c23745b70}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 {attribute 'strict'}
@@ -12,7 +12,7 @@ TYPE E_StateSystem :
 	Safe			, 	// System is in safety state
 	Enable			, 	// System is enabling 
 	Home			, 	// system is hominig 
-	Reset			, 	// System is resetting
+	Resetting		, 	// System is resetting
 	Idle			, 	// system is waiting for commands
 	Manual			, 	// System is in manual mode
 	SemiAuto		, 	// System is in semi auto mode
@@ -57,7 +57,7 @@ END_TYPE
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
-              <v n="TextID">"Reset"</v>
+              <v n="TextID">"Resetting"</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
