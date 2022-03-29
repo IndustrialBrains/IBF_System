@@ -319,9 +319,14 @@ END_IF
 	bSystemOK := bAirOk 	AND bSystemOK ;
 	bSystemOK := bSafetyOK	AND bSystemOK ;	
 				
-	IF NOT bSystemOK AND eStateSystem >= E_StateSystem.Safe THEN
+	IF NOT bSystemOK 
+	AND eStateSystem > E_StateSystem.Safe 
+	AND eStateSystem <> E_StateSystem.Resetting 
+	THEN
 		eStateSystem := E_StateSystem.Safe; 
-	ELSIF (bFatalFault OR bCycleFault) AND eStateSystem <> E_StateSystem.Resetting THEN 
+	ELSIF (bFatalFault OR bCycleFault) 
+	AND eStateSystem <> E_StateSystem.Resetting 
+	THEN 
 		eStateSystem := E_StateSystem.Fault ;
 	END_IF
 
@@ -522,7 +527,8 @@ THEN
 ELSE 
 	bSafetyOK				:= FALSE ;
 	GVL_HMI.bEstopActive 	:= TRUE ;
-	IF eStateSystem > E_StateSystem.Safe THEN 
+	IF eStateSystem > E_StateSystem.Safe 
+	AND eStateSystem <> E_StateSystem.Resetting  THEN 
 		eStateSystem			:= E_StateSystem.Safe ;
 	END_IF
 END_IF
