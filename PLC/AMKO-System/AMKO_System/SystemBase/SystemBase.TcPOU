@@ -690,7 +690,9 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bEnabled THEN 
 			fbCmdStartSystem.CmdBlinkFast();
-			IF fbCmdStartSystem.bFeStatus THEN
+			IF fbCmdResetSafety.bFeStatus THEN
+				eStateSystem := E_StateSystem.Resetting ;
+			ELSIF fbCmdStartSystem.bFeStatus THEN
 				eStateSystem := E_StateSystem.Home ;
 			END_IF
 		END_IF
@@ -707,7 +709,7 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Safe ;
 		ELSIF bHomed THEN
 			eStateSystem := E_StateSystem.Idle ;
-		ELSIF NOT bSafetyOK THEN 
+		ELSE 
 			eStateSystem := E_StateSystem.Enable ;
 		END_IF
 	E_StateSystem.Idle:
