@@ -681,6 +681,8 @@ CASE eStateSystem OF
 		IF bIsSafe 
 		AND bSystemOK THEN 
 			eStateSystem 	:= E_StateSystem.Enable;
+		ELSIF fbResetSystem.bFeStatus THEN
+			eStateSystem	:= E_StateSystem.Resetting;
 		ELSE 
 			ExecSafeStop();
 		END_IF
