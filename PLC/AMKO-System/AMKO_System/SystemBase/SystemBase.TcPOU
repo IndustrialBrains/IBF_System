@@ -66,13 +66,13 @@ VAR
 	
 	// System HMI commands
 	fbStartSemiAuto				: FB_DevHMIButton ; // HMI start semi automatic button 
-	fbStartAuto					: FB_DevHMIButton ; // Hmi start automatic button
-	
+	fbStartAuto					: FB_DevHMIButton ; // HMI start automatic button
+	fbResetSystem				: FB_DevHMIButton ; // HMI Reset system
+	fbCmdPowerOff				: FB_DevHMIButton ; // HMI Power off system
+
 	// system Commands 
 	fbCmdStartSystem		 	: FB_DevPushbuttonLight  		; // (re)start system input from button
 	fbCmdStartAuto				: FB_DevPushbuttonLight			; // Start system automatic cycle
-	fbCmdStartManual			: FB_DevHMIButton 				; // Start system in manual mode 
-	fbCmdPowerOff				: FB_DevHMIButton 				; // Power off system
 	
 	//System state
 	bSafetyOK					: BOOL := FALSE ;
@@ -235,7 +235,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// call parameter handler
-Utilities_Library.GVL_Parameters.fbParameterHandler();
+GVL_Parameters.fbParameterHandler();
 Device_Library.GVL_DevManual.fbManualControler();
 
 // Execute button functions 
@@ -243,6 +243,10 @@ fbStartAuto		( 	tDelay			:= T#100MS,
 					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler );
 fbStartSemiAuto ( 	tDelay			:= T#100MS,
+					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler ); 
+fbResetSystem 	( 	Istatus			:= GVL_Message.bResetFaults,
+					tDelay			:= T#5000MS,
 					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler ); 
 
@@ -279,12 +283,6 @@ END_VAR
         <ST><![CDATA[// ===== full reset ======
 	IF fbCmdResetSafety.bFcoDelay THEN 
 		eStateSystem 	:= E_StateSystem.NoReference ;
-	ELSIF fbCmdResetSafety.bFeStatus THEN
-		IF  eStateSystem = E_StateSystem.Fault OR eStateSystem = E_StateSystem.Idle THEN 
-			eStateSystem	:= E_StateSystem.Reset ;
-		ELSE 
-			eStateSystem	:= E_StateSystem.Idle ;
-		END_IF
 	END_IF
 
 // ====== power off ======
@@ -323,7 +321,7 @@ END_IF
 				
 	IF NOT bSystemOK AND eStateSystem >= E_StateSystem.Safe THEN
 		eStateSystem := E_StateSystem.Safe; 
-	ELSIF (bFatalFault OR bCycleFault) AND eStateSystem <> E_StateSystem.Reset THEN 
+	ELSIF (bFatalFault OR bCycleFault) AND eStateSystem <> E_StateSystem.Resetting THEN 
 		eStateSystem := E_StateSystem.Fault ;
 	END_IF
 
@@ -697,30 +695,34 @@ CASE eStateSystem OF
 			END_IF
 		END_IF
 	E_StateSystem.Home:	
-		IF ExecHoming() THEN
+		IF fbCmdResetSafety.bFeStatus THEN
+			eStateSystem := E_StateSystem.Safe;			
+		ELSIF ExecHoming() THEN
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
-	E_StateSystem.Reset:
-		IF (GVL_Message.bResetFaults 
-		OR fbCmdResetSafety.bFeStatus)
-		THEN
-			bResetting := FALSE ;
-		ELSIF NOT bResetDone THEN 
+	E_StateSystem.Resetting:
+		IF NOT bResetDone THEN 
 			bResetting S= TRUE ;
+		ELSIF NOT bSafetyOK THEN 
+			eStateSystem := E_StateSystem.Safe ;
 		ELSIF bHomed THEN
 			eStateSystem := E_StateSystem.Idle ;
-		ELSE 
+		ELSIF NOT bSafetyOK THEN 
 			eStateSystem := E_StateSystem.Enable ;
 		END_IF
 	E_StateSystem.Idle:
 		fbCmdStartSystem.CmdBlinkSlow();
-		IF GVL_HMI.bCmdManual THEN 
+		IF fbCmdResetSafety.bFeStatus OR fbResetSystem.bFeStatus THEN
+			eStateSystem := E_StateSystem.Resetting;			
+		ELSIF GVL_HMI.bCmdManual THEN 
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bSystemOK AND fbCmdStartSystem.bFeStatus THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
 		END_IF
 	E_StateSystem.Manual:
-		IF Device_Library.GVL_DevManual.bManualModeActive THEN
+		IF fbCmdResetSafety.bFeStatus THEN
+			eStateSystem := E_StateSystem.Safe;			
+		ELSIF Device_Library.GVL_DevManual.bManualModeActive THEN
 			ExecManual();
 		END_IF
 		
@@ -730,7 +732,9 @@ CASE eStateSystem OF
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
 		GVL_HMI.bCmdSemiAuto 	:= TRUE;
-		IF (fbCmdStartAuto.bFeStatus 
+		IF fbCmdResetSafety.bFeStatus THEN
+			eStateSystem := E_StateSystem.Idle;			
+		ELSIF (fbCmdStartAuto.bFeStatus 
 		OR fbStartAuto.bFcoDelay 
 		OR bAutomatic)
 		AND NOT bModuleLocked THEN 
@@ -740,7 +744,9 @@ CASE eStateSystem OF
 	E_StateSystem.Automatic:
 		ExecAutomatic();
 		Gvl_HMI.bCmdAutomatic := TRUE;
-		IF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
+		IF fbCmdResetSafety.bFeStatus THEN
+			eStateSystem := E_StateSystem.Safe;			
+		ELSIF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
 			eStateSystem := E_StateSystem.Idle ;
 		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus OR bMissingCond THEN  
 			bCmdPause 	:= NOT bPaused ;
@@ -755,11 +761,9 @@ CASE eStateSystem OF
 			fbCmdStartAuto.CmdBlinkFast(); 				
 		END_IF
 	E_StateSystem.Fault:
-		IF (GVL_Message.bResetFaults 
-		OR fbCmdResetSafety.bFeStatus)
-		THEN
+		IF fbResetSystem.bFeStatus OR fbCmdResetSafety.bFeStatus THEN
 			bResetDone		:= FALSE ;
-			eStateSystem 	:= E_StateSystem.Reset ;
+			eStateSystem 	:= E_StateSystem.Resetting ;
 		ELSIF bFatalFault THEN 
 			ExecSafeStop();
 		ELSIF bCycleFault THEN 
