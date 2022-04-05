@@ -686,7 +686,11 @@ CASE eStateSystem OF
 	E_StateSystem.Safe:
 		IF bIsSafe 
 		AND bSystemOK THEN 
-			eStateSystem 	:= E_StateSystem.Enable;
+			IF bFatalFault OR bCycleFault THEN
+				eStateSystem := E_StateSystem.Fault ;
+			ELSE
+				eStateSystem 	:= E_StateSystem.Enable;
+			END_IF
 		ELSIF fbResetSystem.bFeStatus THEN
 			eStateSystem	:= E_StateSystem.Resetting;
 		ELSE 
@@ -715,6 +719,8 @@ CASE eStateSystem OF
 			bResetting S= TRUE ;
 		ELSIF NOT bSafetyOK THEN 
 			eStateSystem := E_StateSystem.Safe ;
+		ELSIF bFatalFault OR bCycleFault THEN
+			eStateSystem := E_StateSystem.Fault ;
 		ELSIF bHomed THEN
 			eStateSystem := E_StateSystem.Idle ;
 		ELSE 
