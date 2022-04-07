@@ -7,50 +7,52 @@ VAR_INPUT // System configuration settings
 	bIcfAirCheckPresent	: BOOL := TRUE; // System is not equiped with air pressure sensor 
 END_VAR
 VAR	// Fault indications
-	bMissingCond	: BOOL := FALSE ; // Module missing condition active
-	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
-	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
+	bMissingCond		: BOOL := FALSE ; // Module missing condition active
+	bFatalFault			: BOOL := FALSE ; // Module fatal fault is active
+	bCycleFault			: BOOL := FALSE ; // Module cycle fault is active
 
 	// Check values
-	bReferenceOk	: BOOL := FALSE ; // All module references  have been checked
+	bReferenceOk		: BOOL := FALSE ; // All module references  have been checked
 
 	// State indication
-	bSafeStopping	: BOOL := false ; // Module is stopping by safety
-	bIsSafe			: BOOL := FALSE ; // Module is safe and locked until safety is ok
-	bNoreference	: BOOL := FALSE ; // Module Startup Undefined initialization required
+	bSafeStopping		: BOOL := FALSE ; // Module is stopping by safety
+	bIsSafe				: BOOL := FALSE ; // Module is safe and locked until safety is ok
+	bNoreference		: BOOL := FALSE ; // Module Startup Undefined initialization required
 
-	bInitializing	: BOOL := FALSE ; // Module startup initializing
-	binitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
+	bInitializing		: BOOL := FALSE ; // Module startup initializing
+	binitialized		: BOOL := FALSE ; // Module startup initialized waiting for startup command
+	
+	bParametersLoaded 	: BOOL := FALSE ; // Parameters have been loaded from the file(s) 
 
-	bIdle 			: BOOL := FALSE ; // Module startup Idle no commands active
+	bIdle 				: BOOL := FALSE ; // Module startup Idle no commands active
 
-	bEnabling 		: BOOL := FALSE ; // Module Startup enabeling 
-	bEnabled 		: BOOL := FALSE ; // Module Startup Enabled
+	bEnabling 			: BOOL := FALSE ; // Module Startup enabeling 
+	bEnabled 			: BOOL := FALSE ; // Module Startup Enabled
 	
-	bHoming			: BOOL := FALSE ; // Module startup homing back to base position and recalibrate
-	bHomed 			: BOOL := FALSE ; // Module startup homed waiting for further further commands
+	bHoming				: BOOL := FALSE ; // Module startup homing back to base position and recalibrate
+	bHomed 				: BOOL := FALSE ; // Module startup homed waiting for further further commands
 
-	bHolding 		: BOOL := FALSE ; // Module Module Hold motion command executing
-	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
+	bHolding 			: BOOL := FALSE ; // Module Module Hold motion command executing
+	bHeld	 			: BOOL := FALSE ; // Module Hold Motion is held until command is released	
 	
-	bResetting 		: BOOL := FALSE ; // Module Reset resetting error status
-	bResetDone 		: BOOL := FALSE ; // Module reset is done   
+	bResetting 			: BOOL := FALSE ; // Module Reset resetting error status
+	bResetDone 			: BOOL := FALSE ; // Module reset is done   
 
-	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual 
+	bManual 			: BOOL := FALSE ; // Module Work status Module in Manual 
 	
-	bStartSemiAuto	: BOOL := FALSE ; // Start semi automatic mode 
-	bSemiAuto		: BOOL := FALSE ; // Module work status module in semi automatic
+	bStartSemiAuto		: BOOL := FALSE ; // Start semi automatic mode 
+	bSemiAuto			: BOOL := FALSE ; // Module work status module in semi automatic
 	
-	bStartAuto		: BOOL := FALSE ; // Start automatic mode
-	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
+	bStartAuto			: BOOL := FALSE ; // Start automatic mode
+	bAutomatic 			: BOOL := FALSE ; // Module Work status Module in Automatic mode
 	
-	bCmdPause		: BOOL := FALSE ; // Pause all modules 
-	bPaused 		: BOOL := FALSE ; // all modules are paused
+	bCmdPause			: BOOL := FALSE ; // Pause all modules 
+	bPaused 			: BOOL := FALSE ; // all modules are paused
 	
-	bPoweringOff	: BOOL := FALSE ; // Module is powering off
-	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
+	bPoweringOff		: BOOL := FALSE ; // Module is powering off
+	bPowerdOff			: BOOL := FALSE ; // Module has powerd off 	
 
-	bModuleLocked	: BOOL := false ; // a module is locked for commands
+	bModuleLocked		: BOOL := false ; // a module is locked for commands
 END_VAR
 VAR
 	// System inputs 
@@ -151,7 +153,7 @@ IF bFirstCycle THEN
 END_IF
 
 // check system functions
-IF binitialized THEN 
+IF binitialized AND bParametersLoaded THEN 
 	CheckSystemOK();
 	CheckSystemCommands();
 END_IF 
@@ -678,7 +680,8 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.LoadParameters	;
 		END_IF
 	E_StateSystem.LoadParameters:
-		IF GVL_Parameters.fbParameterHandler.Init() THEN
+		bParametersLoaded := GVL_Parameters.fbParameterHandler.Init(); 
+		IF bParametersLoaded THEN
 			eStateSystem := E_StateSystem.Safe ;
 		ELSIF GVL_Parameters.fbParameterHandler.bError THEN 
 			eStateSystem := E_StateSystem.NoReference ;
