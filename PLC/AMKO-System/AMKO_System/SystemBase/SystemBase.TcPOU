@@ -390,6 +390,17 @@ END_IF
 CmdAddModule := bModuleAdded ; ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CmdReset" Id="{81a11f00-ce22-44b4-b332-2d4b7e3055ba}">
+      <Declaration><![CDATA[METHOD CmdReset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[eStateSystem := E_StateSystem.Resetting;
+
+CmdReset := TRUE;]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecAutomatic" Id="{3c758811-81f1-42d1-83e5-646cc80a7b4f}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PRIVATE ExecAutomatic : BOOL
 VAR_INPUT
