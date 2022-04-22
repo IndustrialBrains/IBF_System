@@ -44,12 +44,12 @@ VAR_OUTPUT
 	bSemiAuto		: BOOL := FALSE ; // Module work status in semi automatic
 	bStartAuto		: BOOL := FALSE ; // Module start automatic cycle 
 	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
-	bPaused			: BOOL := false ; // Module paused
+	bPaused			: BOOL := FALSE ; // Module paused
 	
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
 	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
 
-	bLocked			: BOOL := false ; // module is locked for commands
+	bLocked			: BOOL := FALSE ; // module is locked for commands
 END_VAR
 VAR 
 	// Internal functions 

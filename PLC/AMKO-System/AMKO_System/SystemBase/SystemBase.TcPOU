@@ -363,7 +363,7 @@ VAR_INPUT
 	refToModule : REFERENCE TO Fb_ModuleBase ; // reference to module function
 END_VAR
 VAR
-	bModuleAdded	: BOOL ;
+	bModuleAdded	: BOOL := FALSE;
 	i 				: UDINT ; 
 END_VAR
 ]]></Declaration>
@@ -379,8 +379,7 @@ FOR i:= 1 TO GVL_Main.cnMaxNUMBEROFMODULES DO
 END_FOR
 
 // If device is not found add device to the list
-IF NOT bModuleAdded THEN 
-	nNumberOfModules := LIMIT(1, nNumberOfModules,GVL_Main.cnMaxNUMBEROFMODULES)	;
+IF NOT bModuleAdded AND nNumberOfModules >= 1 AND nNumberOfModules <= GVL_Main.cnMaxNUMBEROFMODULES THEN
 	arpModules[nNumberOfModules].nNumber 	:= refToModule.nModuleID;
 	arpModules[nNumberOfModules].sName		:= refToModule.sName	;
 	arpModules[nNumberOfModules].pFunction 	:= ADR(refToModule)		;	
