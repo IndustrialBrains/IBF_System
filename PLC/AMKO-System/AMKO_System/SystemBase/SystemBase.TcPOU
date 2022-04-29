@@ -112,8 +112,10 @@ VAR // safety
 	// inputs 
 	ibEstopOk 			AT%I*	: BOOL  ; // system emergency stop ok
 	ibSystemSafetyOK	AT%I*	: BOOL  ; // System is safe 
-	iEstopFunctionFault AT%I*	: BOOL	; // Emergency stop function fault (wiring or edm fault)
-	iGeneralSafetyFault	AT%I*	: BOOL	; // General safety program fault
+	iSafetyFBErr		AT%I*	: BOOL	; // The "FB Error" group signal
+	iSafetyComErr		AT%I*	: BOOL	; // The "Com Error" group signal
+	iSafetyOtherErr		AT%I*	: BOOL	; // The "Other Err" group signal
+	iSafetyOutErr		AT%I*	: BOOL	; // The "Out Err" group signal
 	iSTOFault			AT%I* 	: BOOL	; // Motor safe torque off fault active
 	
 	// Outputs 
@@ -567,9 +569,10 @@ fbCmdResetSafety(	tDelay			:= T#30S ,
 qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
 
 // Set safety system in run mode
-IF NOT iGeneralSafetyFault 
-// AND NOT iSTOFault 
-AND NOT iEstopFunctionFault
+IF NOT iSafetyFBErr 
+AND NOT iSafetyComErr
+AND NOT iSafetyOtherErr
+AND NOT iSafetyOutErr
 AND NOT iSystemSafetyFault 
 AND binitialized THEN 
 	qbRunSafety := TRUE ;
@@ -583,22 +586,22 @@ TOfSTOErrAck	(IN := qbSTOErrAckn 	);
 qbSTOErrAckn	:= FALSE ;
 qbSafetyErrAckn := FALSE ;
 
-IF iGeneralSafetyFault THEN 
-	GVL_HMI.sCmdEstopText 	:= 'Safety Program fault';
+IF iSafetyFBErr THEN 
+	GVL_HMI.sCmdEstopText 	:= 'Safety Program Function block error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE; 
 	END_IF
 	stMessage.Active := TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Safety program is in fault state. Check wiring ';
+	stMessage.Discription	:= 'Safety program is in fault state.';
 	stMessage.LocationName	:= 'Main safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
-	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state. Check wiring ';
-ELSIF iEstopFunctionFault THEN
-	GVL_HMI.sCmdEstopText 	:= 'Safety button fault check button wiring';
+	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state.';
+ELSIF iSafetyComErr THEN
+	GVL_HMI.sCmdEstopText 	:= 'Safety program com error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
@@ -611,6 +614,34 @@ ELSIF iEstopFunctionFault THEN
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check emergency button wiring ';
+ELSIF iSafetyOutErr THEN
+	GVL_HMI.sCmdEstopText 	:= 'Safety program out error';
+	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
+		qbSafetyErrAckn := TRUE ;
+	END_IF
+	stMessage.Active 		:= TRUE ;
+	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+	stMessage.Discription	:= 'Emergency stop fault, check wiring ';
+	stMessage.LocationName	:= 'Emergency stop safety';
+	stMessage.LocationNumber:= 1;
+	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
+	stMessage.nModuleID		:= 0;
+	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check wiring ';
+ELSIF iSafetyOtherErr THEN
+	GVL_HMI.sCmdEstopText 	:= 'Safety program other error';
+	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
+		qbSafetyErrAckn := TRUE ;
+	END_IF
+	stMessage.Active 		:= TRUE ;
+	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
+	stMessage.Discription	:= 'Safety program is in fault state. ';
+	stMessage.LocationName	:= 'Emergency stop safety';
+	stMessage.LocationNumber:= 1;
+	stMessage.FaultType		:= Utilities_Library.E_FaultTypes.FF;
+	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
+	stMessage.nModuleID		:= 0;
+	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state. ';
 ELSIF iSystemSafetyFault THEN
 // System safety function faults 
 	GVL_HMI.sCmdEstopText 	:= 'Collision detection Fault check sensor wiring';
