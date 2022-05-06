@@ -45,6 +45,8 @@ VAR_OUTPUT
 	bStartAuto		: BOOL := FALSE ; // Module start automatic cycle 
 	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
 	bPaused			: BOOL := FALSE ; // Module paused
+	bStopAuto		: BOOL := FALSE ; // Module Stop automatic
+	bStopping		: BOOL := FALSE ; // MOdule stopping auto cycle
 	
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
 	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
@@ -131,6 +133,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[IF NOT bAutomatic THEN 
 	bStartAuto 		:= TRUE ;
+	bStopping		:= FALSE;
 END_IF 
 
 CmdAutomatic 	:= bAutomatic;]]></ST>
@@ -217,6 +220,20 @@ END_VAR
 CmdSemiAuto := bSemiAuto ;
 
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdStopAutomatic" Id="{e74f682d-372f-4947-8bd2-68348e1c28f7}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdStopAutomatic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF bAutomatic THEN 
+	bStartAuto 		:= FALSE ;
+	bStopAuto 		:= TRUE ;
+END_IF 
+
+CmdStopAutomatic 	:= NOT bAutomatic;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecAutomatic" Id="{60275d51-07c9-40b6-9565-a211f029bc96}" FolderPath="Execute\">
@@ -330,7 +347,12 @@ CallComponents();
 
 
 // Run automatic function 
-IF bStartAuto OR bAutomatic THEN 
+IF bStopAuto OR bStopping THEN 
+	bStopping 	:= ExecAutomatic();
+	bStopAuto	:= FALSE;
+	bStartAuto 	:= FALSE ;
+	bSemiAuto	:= FALSE;
+ELSIF bStartAuto OR bAutomatic THEN 
 	bAutomatic 	:= ExecAutomatic();
 	bStartAuto 	:= FALSE ;
 	bSemiAuto	:= FALSE ;

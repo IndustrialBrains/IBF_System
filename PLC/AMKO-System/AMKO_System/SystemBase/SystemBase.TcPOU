@@ -45,6 +45,8 @@ VAR	// Fault indications
 	
 	bStartAuto			: BOOL := FALSE ; // Start automatic mode
 	bAutomatic 			: BOOL := FALSE ; // Module Work status Module in Automatic mode
+	bStopAuto			: BOOL := FALSE ; // Start automatic mode
+	bStoppingAuto		: BOOL := FALSE ; // Start automatic mode
 	
 	bCmdPause			: BOOL := FALSE ; // Pause all modules 
 	bPaused 			: BOOL := FALSE ; // all modules are paused
@@ -75,6 +77,7 @@ VAR
 	// system Commands 
 	fbCmdStartSystem		 	: FB_DevPushbuttonLight  		; // (re)start system input from button
 	fbCmdStartAuto				: FB_DevPushbuttonLight			; // Start system automatic cycle
+	fbCmdStopAuto				: FB_DevPushbuttonLight			; // Start system automatic cycle
 	
 	//System state
 	bSafetyOK					: BOOL := FALSE ;
@@ -188,6 +191,7 @@ bManual			:= TRUE	;
 bSemiAuto		:= TRUE ;
 bAutomatic		:= FALSE; // Reverse feedback 
 AllAutomatic 	:= TRUE ;
+bStoppingAuto	:= TRUE ;
 bEnabled		S= bEnabling ;
 bPowerdOff		:= TRUE;
 bHomed 			:= TRUE;
@@ -216,6 +220,8 @@ FOR i := 1 TO nNumberOfModules DO
 	bCmdPause		S= arpModules[i].pFunction^.bReqPause						; // Request for pause from module
 	bAutomatic		S= arpModules[i].pFunction^.bAutomatic 						; // Stay in automatic even when one module is in automatic
 	AllAutomatic	:= arpModules[i].pFunction^.bAutomatic 		AND AllAutomatic; // reset start automatic when al modules are in automatic operation
+	bStoppingAuto	:= arpModules[i].pFunction^.bStopping 		AND bStoppingAuto; // reset start automatic when al modules are in automatic operation
+
 END_FOR
 
 // Reset start inputs
@@ -226,6 +232,7 @@ END_FOR
 	bPoweringOff	R= bPowerdOff 	;
 	bHoming			R= bHomed 		;
 	bStartAuto		R= AllAutomatic	; 
+	bStopAuto		R= bStoppingAuto	;
 	bCmdPause		R= NOT bAutomatic	;
 ]]></ST>
       </Implementation>
@@ -256,6 +263,9 @@ fbCmdStartSystem(	refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualContro
 					refFbFault 		:= fbFaultHandler);
 fbCmdStartAuto	(	refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler);
+fbCmdStopAuto	(	refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler);
+
 // execute input functions
 fbValveMainAirSupply(	bEnable			:= TRUE,
 						bSafetyOk		:= ibEstopOk,
@@ -269,6 +279,7 @@ IF NOT bDevicesAddedtoManual THEN
 	END_IF
 	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartSystem	);
 	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartAuto		);
+	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStopAuto		);
 	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdResetSafety	);
 	bDevicesAddedtoManual S= TRUE ;
 END_IF
@@ -408,7 +419,11 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF bStartAuto THEN 
+        <ST><![CDATA[IF bStopAuto THEN 
+	FOR i := 1 TO nNumberOfModules DO 
+		arpModules[i].pFunction^.CmdStopAutomatic() ;
+	END_FOR
+ELSIF bStartAuto THEN 
 	// Run automatic function in 
 	FOR i := 1 TO nNumberOfModules DO 
 		arpModules[i].pFunction^.CmdAutomatic() ;
@@ -768,18 +783,23 @@ CASE eStateSystem OF
 		OR bAutomatic)
 		AND NOT bModuleLocked THEN 
 			bStartAuto 		:= TRUE ;
+			bStopAuto 		:= FALSE;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
 	E_StateSystem.Automatic:
 		ExecAutomatic();
 		Gvl_HMI.bCmdAutomatic := TRUE;
 		IF fbCmdResetSafety.bFeStatus THEN
-			eStateSystem := E_StateSystem.Safe;			
-		ELSIF bAutomatic AND fbCmdStartSystem.bFeStatus THEN  
-			eStateSystem := E_StateSystem.Idle ;
-		ELSIF bAutomatic AND fbCmdStartAuto.bFeStatus OR bMissingCond THEN  
-			bCmdPause 	:= NOT bPaused ;
-		ELSIF NOT bAutomatic AND NOT bStartAuto THEN 
+			eStateSystem := E_StateSystem.Safe;
+		ELSIF bAutomatic THEN
+			IF fbCmdStartSystem.bFeStatus THEN
+				eStateSystem := E_StateSystem.Idle ;
+			ELSIF fbCmdStopAuto.bFeStatus THEN
+				bStopAuto := TRUE;
+			ELSIF fbCmdStartAuto.bFeStatus OR bMissingCond THEN  
+				bCmdPause 	:= NOT bPaused ;
+			END_IF
+		ELSIF NOT bStartAuto AND NOT bStoppingAuto THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
 		END_IF
 		
@@ -835,6 +855,9 @@ fbCmdStartSystem.Init	( 	nId 		:= 4,
 							nParentId	:= 0 );
 
 fbCmdStartAuto.Init		( 	nId 		:= 5,
+							nParentId	:= 0 );
+
+fbCmdStopAuto.Init		( 	nId 		:= 6,
 							nParentId	:= 0 );
 							
 // Initialize all modules
