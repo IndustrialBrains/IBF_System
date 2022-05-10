@@ -13,14 +13,18 @@ VAR_OUTPUT
 	// Fault types 
 	bSystemFF			: BOOL 	:= FALSE	; // System fatal fault is active
 	bSystemCF			: BOOL 	:= FALSE	; // System Cycle fault is active
-	bSystemMC 			: BOOL 	:= FALSE	; // a missing condition is active only 
+	bSystemMC 			: BOOL 	:= FALSE	; // a missing condition is active 
+	bSystemOM			: BOOL	:= FALSE	; // operator message is active
 END_VAR
 VAR
 	// Message variables
 	bCmdSnoozeMessage	: REFERENCE TO BOOL  	:= GVL_Message.bCmdSnoozeMessage; // Snooze message display
 	arActiveFaults 		: REFERENCE TO ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault := GVL_Message.arActiveFaults ; // Active faults overview for showing in HMI
+	arOperatorMessages	: REFERENCE TO ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF STRING ; // Active operator messages
 	arOldFaults 		: ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault ; // Old faults overview for comparing to active
 	arWriteToLog		: ARRAY [0..Param_Messages.nMAX_MESSAGES_SHOWN] OF UDT_Fault ; // Fault array for writing to log file 
+	nNumberOfOM			: UDINT ; // number of active operator messages
+	nShownOM			: UDINT ; // currently shown operator message
 	// Message logging
 	dToday				: DATE 	; 
 	nWriteStep			: UDINT := 0 ;
@@ -35,6 +39,7 @@ VAR
 END_VAR
 VAR // functions 
 	tofSnoozeMessages	: TOF ; // timer function for message snoozing
+	tonOperatorMessageCycle : TON ; // Timer for cycling through operator messages
 	// Log to file functions
 	fbFileOpen		: FB_FileOpen	;(* Opens file *)
 	fbFileClose		: FB_FileClose	;(* Closes file *)
@@ -86,11 +91,17 @@ VAR
 	p				: UDINT	;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Go over modules to check for fault messages 
+        <ST><![CDATA[// reset number of operator messages
+MEMSET(destAddr :=ADR(arOperatorMessages), fillByte := 0, n := SIZEOF(arOperatorMessages));
+nNumberOfOM := 0;
+// Go over modules to check for fault messages 
 FOR i := 1 TO nNumberOfModules DO 
 	// Check for active messages
 	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
-		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType <> E_FaultTypes.NA THEN 
+		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType = E_FaultTypes.OM THEN 
+			arOperatorMessages[nNumberOfOM] := arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].Discription ;
+			nNumberOfModules := MIN(nNumberOfOM + 1, Param_Messages.nMAX_MESSAGES_SHOWN);		
+		ELSIF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType > E_FaultTypes.OM THEN 
 			arTempFaults[p]:= arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j] ;
 			p := MIN( p + 1, Param_Messages.nMAX_MESSAGES_SHOWN);
 		ELSE
@@ -101,6 +112,7 @@ END_FOR
 
 arOldFaults		:= arActiveFaults 	;
 arActiveFaults	:= arTempFaults 	;
+
 ]]></ST>
       </Implementation>
     </Method>
@@ -157,6 +169,17 @@ ELSE
 	GVL_Message.bHideFaults := TRUE ;
 	GVL_Message.bHideReset	:= TRUE ; 
 END_IF
+
+// Cycle through operator messages
+tonOperatorMessageCycle(PT := Param_Messages.tOMCYCLETIME, IN :=NOT tonOperatorMessageCycle.Q);
+IF tonOperatorMessageCycle.Q THEN
+	nShownOM := nShownOM +1;
+	IF nShownOM >= nNumberOfOM THEN 
+		nShownOM := 0;
+	END_IF
+	Utilities_Library.GVL_Message.sOPeratorMessage := arOperatorMessages[nShownOM];
+END_IF
+
 ]]></ST>
       </Implementation>
     </Method>
@@ -175,6 +198,7 @@ FOR i := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO
 	bSystemFF	:= arActiveFaults[i].FaultType = E_FaultTypes.FF OR bSystemFF;
 	bSystemCF	:= arActiveFaults[i].FaultType = E_FaultTypes.CF OR bSystemCF;
 	bSystemMC	:= arActiveFaults[i].FaultType = E_FaultTypes.MC OR bSystemMC;
+	bSystemOM	:= arActiveFaults[i].FaultType = E_FaultTypes.OM OR bSystemOM;
 END_FOR
 
 
