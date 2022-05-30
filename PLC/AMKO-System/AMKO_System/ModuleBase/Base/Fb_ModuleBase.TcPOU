@@ -296,6 +296,7 @@ END_VAR
 
 // Prevent automatic start when fault is active
 	bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
+	bStopAuto  R= bCmdReset OR bFatalFault OR bCycleFault ;
 ]]></ST>
       </Implementation>
     </Method>
@@ -345,33 +346,33 @@ END_IF
 // Call components 
 CallComponents();
 
-
 // Run automatic function 
 IF bStopAuto OR bStopping THEN 
 	bStopping 	:= ExecAutomatic();
+	bAutomatic  := FALSE;
 	bStopAuto	:= FALSE;
-	bStartAuto 	:= FALSE ;
+	bStartAuto 	:= FALSE;
 	bSemiAuto	:= FALSE;
 ELSIF bStartAuto OR bAutomatic THEN 
 	bAutomatic 	:= ExecAutomatic();
-	bStartAuto 	:= FALSE ;
-	bSemiAuto	:= FALSE ;
-ELSIF bEnable AND NOT bAutomatic THEN
-	bAutomatic 	:= FALSE ;
-	bSemIAuto  	:= ExecSemiAuto();
+	bStartAuto 	:= FALSE;
+	bSemiAuto	:= FALSE;
+ELSIF bEnable AND NOT bAutomatic AND NOT bStopping THEN
+	bAutomatic 	:= FALSE;
+	bSemiAuto  	:= ExecSemiAuto();
 ELSE
-	bAutomatic 	:= FALSE ;
-	bSemiAuto	:= FALSE ;
+	bStopping   := FALSE;
+	bAutomatic 	:= FALSE;
+	bSemiAuto	:= FALSE;
 END_IF
 
-// run Base Functions 
+// Run Base Functions 
 IF binitialized 
 AND bEnable
 AND bHomed 
 AND NOT bManual THEN 
 	ExecBaseFunctions();
 END_IF
-
 
 // Persistent data 
 IF bCmdWritePersistent THEN 

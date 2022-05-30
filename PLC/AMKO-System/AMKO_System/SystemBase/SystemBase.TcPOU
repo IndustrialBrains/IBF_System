@@ -181,6 +181,9 @@ VAR
 END_VAR
 VAR
 	AllAutomatic : BOOL ;
+	
+	Stopping : BOOL;
+	bAllStopped : BOOL;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// set base conditions
@@ -198,6 +201,7 @@ bEnabled		S= bEnabling ;
 bPowerdOff		:= TRUE;
 bHomed 			:= TRUE;
 bPaused 		:= TRUE;
+bAllStopped     := TRUE;
 
 // copy inputs to modules 
 FOR i := 1 TO nNumberOfModules DO 
@@ -224,6 +228,11 @@ FOR i := 1 TO nNumberOfModules DO
 	AllAutomatic	:= arpModules[i].pFunction^.bAutomatic 		AND AllAutomatic; // reset start automatic when al modules are in automatic operation
 	bStoppingAuto	:= arpModules[i].pFunction^.bStopping 		AND bStoppingAuto; // reset start automatic when al modules are in automatic operation
 
+	Stopping		:= arpModules[i].pFunction^.bStopping;
+	
+	bAllStopped     := NOT Stopping AND NOT bAutomatic AND bAllStopped;
+
+	
 END_FOR
 
 // Reset start inputs
@@ -234,7 +243,7 @@ END_FOR
 	bPoweringOff	R= bPowerdOff 	;
 	bHoming			R= bHomed 		;
 	bStartAuto		R= AllAutomatic	; 
-	bStopAuto		R= bStoppingAuto	;
+	bStopAuto		R= bAllStopped	;
 	bCmdPause		R= NOT bAutomatic	;
 ]]></ST>
       </Implementation>
@@ -830,7 +839,7 @@ CASE eStateSystem OF
 			ELSIF fbCmdStartAuto.bFeStatus OR bMissingCond THEN  
 				bCmdPause 	:= NOT bPaused ;
 			END_IF
-		ELSIF NOT bStartAuto AND NOT bStoppingAuto THEN 
+		ELSIF NOT bStartAuto AND NOT bStopAuto THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
 		END_IF
 		
