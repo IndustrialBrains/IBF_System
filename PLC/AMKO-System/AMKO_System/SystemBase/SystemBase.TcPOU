@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
@@ -43,6 +43,7 @@ VAR	// Fault indications
 	bStartSemiAuto		: BOOL := FALSE ; // Start semi automatic mode 
 	bSemiAuto			: BOOL := FALSE ; // Module work status module in semi automatic
 	
+	bRecoverSemiAuto	: BOOL := false ; // Recover to automatic after fault reset
 	bStartAuto			: BOOL := FALSE ; // Start automatic mode
 	bAutomatic 			: BOOL := FALSE ; // Module Work status Module in Automatic mode
 	bStopAuto			: BOOL := FALSE ; // Start automatic mode
@@ -191,7 +192,6 @@ bReferenceOk	:= TRUE ;
 bIsSafe			:= TRUE ;
 bIdle			:= TRUE ;	
 bHeld			:= TRUE ;
-bResetDone 		S= bResetting	;
 bManual			:= TRUE	;
 bSemiAuto		:= TRUE ;
 bAutomatic		:= FALSE; // Reverse feedback 
@@ -205,9 +205,11 @@ bAllStopped     := TRUE;
 
 // copy inputs to modules 
 FOR i := 1 TO nNumberOfModules DO 
+	// set System state indicators
+	arpModules[i].pFunction^.bSysCycleFault		:= bCycleFault		;
+	arpModules[i].pFunction^.bSysFatalFault		:= bFatalFault		; 
 	// set system commands
 	arpModules[i].pFunction^.bEnable			:= bEnabled			;
-	arpModules[i].pFunction^.bCmdReset			:= bResetting		;
 	arpModules[i].pFunction^.bSafetyOK			:= NOT bSafeStopping;
 	arpModules[i].pFunction^.bCmdPause			:= bCmdPause		; 
 	// Read state indications 
@@ -215,7 +217,6 @@ FOR i := 1 TO nNumberOfModules DO
 	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe		;
 	bEnabled 		:= arpModules[i].pFunction^.bEnable 		AND bEnabled	;
 	bHeld			:= arpModules[i].pFunction^.bHeld 			AND bHeld		;
-	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone	;
 	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual		;
 	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto	;
 	bPowerdOff 		:= arpModules[i].pFunction^.bPowerdOff 		AND bPowerdOff	;
@@ -238,7 +239,6 @@ END_FOR
 // Reset start inputs
 	bEnabling		R= bEnabled 	;
 	bHolding		R= bHeld 		;
-	bResetting		R= bResetDone 	;
 	bStartSemiAuto	R= bSemiAuto	;
 	bPoweringOff	R= bPowerdOff 	;
 	bHoming			R= bHomed 		;
@@ -339,6 +339,7 @@ END_IF
 	ELSIF (bFatalFault OR bCycleFault) 
 	AND eStateSystem <> E_StateSystem.Resetting 
 	THEN 
+		bRecoverSemiAuto S= eStateSystem = E_StateSystem.Automatic AND bCycleFault;
 		eStateSystem := E_StateSystem.Fault ;
 	END_IF
 
@@ -483,8 +484,6 @@ ExecPowerOff := bPowerdOff ;]]></ST>
     </Method>
     <Method Name="ExecSafeHold" Id="{09e80f99-469c-4643-bf23-6284454a47bf}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PRIVATE ExecSafeHold : BOOL
-VAR_INPUT
-END_VAR
 VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
@@ -501,11 +500,21 @@ ExecSafeHold := bHeld ;]]></ST>
     </Method>
     <Method Name="ExecSafeReset" Id="{1f949173-b753-460e-b2f0-a3f94b7a8c12}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PRIVATE ExecSafeReset : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[]]></ST>
+        <ST><![CDATA[// reset all modules
+bStartAuto	:= FALSE;
+
+// preset value
+bResetDone	:= TRUE;
+
+FOR i := 1 TO nNumberOfModules DO 
+	bResetDone := arpModules[i].pFunction^.CmdReset() AND bResetDone;
+END_FOR
+
+ExecSafeReset := bResetDone ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSafeStop" Id="{231fd871-3511-471c-84e1-00de0d5b0d2d}" FolderPath="ModuleFunctions\">
@@ -523,6 +532,7 @@ bInitializing	:= FALSE;
 bHoming			:= FALSE;
 bStartAuto		:= FALSE;
 bStartSemiAuto	:= FALSE;
+bRecoverSemiAuto:= FALSE;
 
 // Module safe stop
 IF binitialized AND bReferenceOk THEN 
@@ -771,17 +781,23 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
 	E_StateSystem.Resetting:
-		IF NOT bResetDone THEN 
-			bResetting S= TRUE ;
-		ELSIF NOT bSafetyOK THEN 
-			eStateSystem := E_StateSystem.Safe ;
-		ELSIF bFatalFault OR bCycleFault THEN
-			eStateSystem := E_StateSystem.Fault ;
-		ELSIF bHomed THEN
-			eStateSystem := E_StateSystem.Idle ;
-		ELSE 
-			eStateSystem := E_StateSystem.Enable ;
+		ExecSafeReset();
+		IF bResetDone THEN 
+			IF NOT bSafetyOK THEN 
+				eStateSystem := E_StateSystem.Safe ;
+			ELSIF bFatalFault OR bCycleFault THEN
+				eStateSystem := E_StateSystem.Fault ;
+			ELSIF bRecoverSemiAuto THEN
+				eStateSystem 	:= E_StateSystem.SemiAuto ;
+				bRecoverSemiAuto:= FALSE;
+			ELSIF bHomed THEN
+				eStateSystem := E_StateSystem.Idle ;
+			ELSE 
+				eStateSystem := E_StateSystem.Enable ;
+			END_IF
 		END_IF
+		
+		bResetting := NOT bResetDone; 
 	E_StateSystem.Idle:
 		fbCmdStartSystem.CmdBlinkSlow();
 		IF fbCmdResetSafety.bFeStatus OR fbResetSystem.bFeStatus THEN
@@ -839,7 +855,6 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.Fault:
 		IF fbResetSystem.bFeStatus OR fbCmdResetSafety.bFeStatus THEN
-			bResetDone		:= FALSE ;
 			eStateSystem 	:= E_StateSystem.Resetting ;
 		ELSIF bFatalFault THEN 
 			ExecSafeStop();

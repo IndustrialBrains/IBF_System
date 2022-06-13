@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="Fb_ModuleBase" Id="{e3f07cb2-eb83-4b34-9aad-2d4595c2aa5d}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK PUBLIC ABSTRACT Fb_ModuleBase
@@ -7,7 +7,6 @@ VAR_INPUT
 	nModuleID			: 	UDINT 	:= 1 	; // module reference number used for fault, enable, reset, and safety functions (default := 1, 0 = main system)
 	// main system Inputs
 	bEnable				: 	BOOL	:= FALSE ; // (autolinked) module enable 	
-	bCmdReset 			: 	BOOL	:= FALSE ; // (AutoLinked) reset all faults 
 	bSysFatalFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active
 	bSysCycleFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active 
 	bCmdPause			: 	BOOL 	:= FALSE ; // Pause command	bCmdToStart			
@@ -35,9 +34,10 @@ VAR_OUTPUT
 	binitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
 	bHomed 			: BOOL := FALSE ; // Module startup homed waiting for further further commands
 
-	bHolding 		: BOOL := FALSE ; // Module Module Hold motion command executing
 	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
 	
+	bCmdReset 		: BOOL := FALSE ; // (AutoLinked) reset all faults 
+	bResetting		: BOOL := false ; // Module is resetting
 	bResetDone 		: BOOL := FALSE ; // Module reset is done   
 	
 	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual
@@ -209,6 +209,22 @@ bAutomatic := FALSE ;
 CmdPowerOff := bPowerdOff;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CmdReset" Id="{418beaed-c873-4ac4-8e09-6620ca7cb539}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdReset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Set reset Command
+	bCmdReset 	:= TRUE;
+
+// Set feedback
+	CmdReset 	:= bResetDone AND bResetting;	
+	bResetting	:= FALSE;
+
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="CmdSemiAuto" Id="{791a75b1-1408-4ba1-a250-3359f3233728}" FolderPath="Commands\">
       <Declaration><![CDATA[METHOD INTERNAL CmdSemiAuto : BOOL
 VAR_INPUT
@@ -260,44 +276,36 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Call message function
-	fbFaultHandler();
-	fbFaultHandler.CmdAddFault( stFault := stMessage );
-
-	bFatalFault := fbFaultHandler.bActFF ;
-	bCycleFault := fbFaultHandler.bActCF ;
-	
-	IF bFatalFault THEN
-		ExecSafeStop()	;
-	ELSIF bCycleFault THEN
-		bHeld			S= ExecHold();
-		bHolding 		:= NOT bHeld ;
-	END_IF
-
-// Call reset functions
+        <ST><![CDATA[// Call reset functions
 	ReCmdReset( CLK := bCmdReset);
+	bResetDone R= ReCmdReset.Q;
 	
-	IF ReCmdReset.Q THEN 
-		bResetDone := FALSE ;
-	ELSIF NOT bResetDone THEN 
+	IF bCmdReset AND NOT bResetDone THEN
 		IF binitialized THEN
-			bResetDone := ExecReset() AND fbFaultHandler.CmdReset();
+			bResetDone S= ExecReset() AND fbFaultHandler.CmdReset();
 		ELSE
 			bResetDone := TRUE ;		
 		END_IF
+		bResetting := TRUE;
 	END_IF
 	
 	bCmdReset := FALSE ;
 
-	
+// Call message function
+	fbFaultHandler();
+	fbFaultHandler.CmdAddFault( stFault := stMessage );
 
+	bFatalFault := fbFaultHandler.bActFF OR bSysFatalFault;
+	bCycleFault := fbFaultHandler.bActCF OR bSysCycleFault;
+	
 // Reset safe state when enable is active
 	bIsSafe R= bSafetyOK ;
 
 // Prevent automatic start when fault is active
 	bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
 	bStopAuto  R= bCmdReset OR bFatalFault OR bCycleFault ;
-]]></ST>
+
+	]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHold" Id="{0018095c-5f39-4db3-b3d8-dd0243064ada}" FolderPath="Execute\">
