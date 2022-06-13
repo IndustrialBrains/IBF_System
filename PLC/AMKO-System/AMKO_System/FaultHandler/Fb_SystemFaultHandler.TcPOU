@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="Fb_SystemFaultHandler" Id="{63d9dbdb-7a1d-43ad-9d1e-008ba0d86cdf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL Fb_SystemFaultHandler
 VAR_INPUT
@@ -87,6 +87,7 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Go over modules to check for fault messages 
+{warning disable C0371} 
 FOR i := 1 TO nNumberOfModules DO 
 	// Check for active messages
 	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
@@ -98,6 +99,7 @@ FOR i := 1 TO nNumberOfModules DO
 		END_IF
 	END_FOR
 END_FOR
+{warning restore C0371}
 
 arOldFaults		:= arActiveFaults 	;
 arActiveFaults	:= arTempFaults 	;
