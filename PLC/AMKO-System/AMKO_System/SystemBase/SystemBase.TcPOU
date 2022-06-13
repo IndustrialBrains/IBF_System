@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
@@ -282,18 +282,6 @@ fbValveMainAirSupply(	bEnable			:= TRUE,
 						bSafetyOk		:= ibEstopOk,
 						refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 						refFbFault 		:= fbFaultHandler);
-
-// Add device functions to manual controller 
-IF NOT bDevicesAddedtoManual THEN
-	IF bIcfAirCheckPresent THEN
-		Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbAirpressureOk 	);
-	END_IF
-	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartSystem	);
-	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartAuto		);
-	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStopAuto		);
-	Device_Library.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdResetSafety	);
-	bDevicesAddedtoManual S= TRUE ;
-END_IF
 
 ]]></ST>
       </Implementation>
