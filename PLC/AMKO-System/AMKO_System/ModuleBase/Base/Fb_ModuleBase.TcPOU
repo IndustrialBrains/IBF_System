@@ -39,6 +39,8 @@ VAR_OUTPUT
 	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
 	
 	bResetDone 		: BOOL := FALSE ; // Module reset is done   
+	bCmdAckOW		: BOOL := FALSE	; // Acknowledge the operator warning
+	bAckOWDone		: BOOL := FALSE	; // The operator warning is acknowledged
 	
 	bManual 		: BOOL := FALSE ; // Module Work status Module in Manual
 	bSemiAuto		: BOOL := FALSE ; // Module work status in semi automatic
@@ -123,6 +125,17 @@ END_VAR
       <Implementation>
         <ST><![CDATA[bReferenceOk := TRUE;
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CmdAckOW" Id="{7f2f393e-6d5b-4663-85f8-195cf8858d0b}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdAckOW : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bCmdAckOW := TRUE;
+
+CmdAckOW := bAckOWDone;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdAutomatic" Id="{12a5af10-cb9c-42e0-8f13-2adc898b5d5a}" FolderPath="Commands\">
@@ -289,15 +302,15 @@ END_VAR
 	
 	bCmdReset := FALSE ;
 
-	
 
+	
 // Reset safe state when enable is active
 	bIsSafe R= bSafetyOK ;
 
 // Prevent automatic start when fault is active
 	bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
 	bStopAuto  R= bCmdReset OR bFatalFault OR bCycleFault ;
-]]></ST>
+	]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHold" Id="{0018095c-5f39-4db3-b3d8-dd0243064ada}" FolderPath="Execute\">
@@ -338,7 +351,17 @@ END_VAR
         <ST><![CDATA[// Call fault handling function 
 ExecFaultHandling();
 
-// Check for anny Internal collisions
+//Handle the operator warning acknowledgement
+IF (bCmdAckOW) THEN
+	bAckOWDone := ExecOWAck();
+ELSE
+	bAckOWDone := FALSE;
+END_IF;
+
+//Reset Operator warning acknowledgement command bit
+bCmdAckOW := FALSE;
+
+// Check for any Internal collisions
 IF binitialized THEN
 	CheckCollision();
 END_IF
@@ -388,6 +411,17 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bManual := true;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecOWAck" Id="{fb622af9-b27d-4227-91f8-b2d1b607c450}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ExecOWAck : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//A helper method to prevent modules that don't use the operator warning
+//to have to handle the acknowledgement
+bAckOWDone := bCmdAckOW;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecPowerOff" Id="{ea164508-7b3d-437c-8288-18cdd09bb9f4}" FolderPath="Execute\">

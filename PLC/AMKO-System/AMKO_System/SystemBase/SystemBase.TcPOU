@@ -10,6 +10,7 @@ VAR	// Fault indications
 	bMissingCond		: BOOL := FALSE ; // Module missing condition active
 	bFatalFault			: BOOL := FALSE ; // Module fatal fault is active
 	bCycleFault			: BOOL := FALSE ; // Module cycle fault is active
+	bOperatorWarning	: BOOL := FALSE ; // Module operator warning is active
 
 	// Check values
 	bReferenceOk		: BOOL := FALSE ; // All module references  have been checked
@@ -54,7 +55,9 @@ VAR	// Fault indications
 	bPoweringOff		: BOOL := FALSE ; // Module is powering off
 	bPowerdOff			: BOOL := FALSE ; // Module has powerd off 	
 
-	bModuleLocked		: BOOL := false ; // a module is locked for commands
+	bModuleLocked		: BOOL := FALSE ; // a module is locked for commands
+	
+	bAckWarningsBusy	: BOOL := FALSE	; // The acknowledge process is busy
 END_VAR
 VAR
 	// System inputs 
@@ -73,6 +76,7 @@ VAR
 	fbStartAuto					: FB_DevHMIButton ; // HMI start automatic button
 	fbResetSystem				: FB_DevHMIButton ; // HMI Reset system
 	fbCmdPowerOff				: FB_DevHMIButton ; // HMI Power off system
+	fbAckWarning				: FB_DevHMIButton ; // HMI Acknowledge warnings
 
 	// system Commands 
 	fbCmdStartSystem		 	: FB_DevPushbuttonLight  		; // (re)start system input from button
@@ -148,7 +152,8 @@ fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						bsystemInitialized	:= binitialized,
 						bSystemFF			=> bFatalFault,
 						bSystemCF			=> bCycleFault,
-						bSystemMC			=> bMissingCond);
+						bSystemMC			=> bMissingCond,
+						bSystemOW			=> bOperatorWarning);
 
 // Check if this is the first cycle the PRG is called
 // if not, return. This is to make sure all modules are connected. 
@@ -168,6 +173,9 @@ ExecSystemRun();
 
 // call device functions 
 CallSystemFunctions();
+
+// Call operator warning acknowledgement
+ExecAckWarnings();
 
 // Call modules 
 CallModules();]]></ST>
@@ -269,6 +277,10 @@ fbResetSystem 	( 	Istatus			:= GVL_Message.bResetFaults,
 					tDelay			:= T#5000MS,
 					refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler ); 
+fbAckWarning	(	Istatus			:= GVL_Message.bAckWarnings,
+					tDelay			:= T#100MS,
+					refFbManualCtrl := Device_Library.GVL_DevManual.fbManualControler,
+					refFbFault 		:= fbFaultHandler );
 
 fbCmdStartSystem(	refFbManualCtrl	:= Device_Library.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler);
@@ -420,6 +432,23 @@ END_VAR
         <ST><![CDATA[eStateSystem := E_StateSystem.Resetting;
 
 CmdReset := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecAckWarnings" Id="{86c6f5a0-b6fe-4448-9452-f04a9ea3021f}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD ExecAckWarnings : BOOL
+VAR
+	i : UDINT ;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//If required, run the acknowledge process 
+IF (fbAckWarning.bFeStatus OR NOT bAckWarningsBusy) THEN
+	bAckWarningsBusy := TRUE;
+	
+	FOR i := 1 TO nNumberOfModules DO 
+		bAckWarningsBusy := arpModules[i].pFunction^.CmdAckOW() AND bAckWarningsBusy;
+	END_FOR
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecAutomatic" Id="{3c758811-81f1-42d1-83e5-646cc80a7b4f}" FolderPath="ModuleFunctions\">

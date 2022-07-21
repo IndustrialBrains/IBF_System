@@ -14,6 +14,7 @@ VAR_OUTPUT
 	bSystemFF			: BOOL 	:= FALSE	; // System fatal fault is active
 	bSystemCF			: BOOL 	:= FALSE	; // System Cycle fault is active
 	bSystemMC 			: BOOL 	:= FALSE	; // a missing condition is active only 
+	bSystemOW			: BOOL	:= FALSE	; // A operator warning is active
 END_VAR
 VAR
 	// Message variables
@@ -151,11 +152,14 @@ END_VAR
 IF bSystemCF OR bSystemFF THEN 
 	GVL_Message.bHideFaults := FALSE ;
 	GVL_Message.bHideReset	:= FALSE ; 
+ELSIF bSystemOW THEN
+	GVL_Message.bHideWarnAck := FALSE;
 ELSIF bSystemMC AND NOT tofSnoozeMessages.Q THEN 
 	GVL_Message.bHideFaults := FALSE ;
 ELSE
 	GVL_Message.bHideFaults := TRUE ;
 	GVL_Message.bHideReset	:= TRUE ; 
+	GVL_Message.bHideWarnAck:= TRUE ;
 END_IF
 ]]></ST>
       </Implementation>
@@ -170,11 +174,13 @@ END_VAR]]></Declaration>
         <ST><![CDATA[bSystemFF	:= FALSE ;
 bSystemCF	:= FALSE ;
 bSystemMC	:= FALSE ;
+bSystemOW	:= FALSE ;
 
 FOR i := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO
 	bSystemFF	:= arActiveFaults[i].FaultType = E_FaultTypes.FF OR bSystemFF;
 	bSystemCF	:= arActiveFaults[i].FaultType = E_FaultTypes.CF OR bSystemCF;
 	bSystemMC	:= arActiveFaults[i].FaultType = E_FaultTypes.MC OR bSystemMC;
+	bSystemOW   := arActiveFaults[i].FaultType = E_FaultTypes.OW OR bSystemOW;
 END_FOR
 
 
