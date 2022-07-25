@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
   <DUT Name="Udt_ModuleBase" Id="{11a061a9-9654-4dd2-8413-49d4dc92d1aa}">
     <Declaration><![CDATA[TYPE Udt_ModuleBase :
 STRUCT
@@ -23,6 +23,7 @@ STRUCT
 	bMissingCond	: BOOL := FALSE ; // Module missing condition active
 	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
 	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
+	bOperatorWarning : BOOL := FALSE; //
 
 	// State indication
 	bIsSafe			: BOOL := FALSE ; // Module is safe and locked until safety is ok
