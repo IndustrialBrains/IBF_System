@@ -421,7 +421,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[//A helper method to prevent modules that don't use the operator warning
 //to have to handle the acknowledgement
-bAckOWDone := bCmdAckOW;]]></ST>
+ExecOWAck := bCmdAckOW;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecPowerOff" Id="{ea164508-7b3d-437c-8288-18cdd09bb9f4}" FolderPath="Execute\">
