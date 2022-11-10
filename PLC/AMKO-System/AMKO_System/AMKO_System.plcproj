@@ -15,12 +15,24 @@
     <Implicit_KindOfTask>{be9180ad-8a4c-4d7d-951a-c46c3aed8ad5}</Implicit_KindOfTask>
     <Implicit_Jitter_Distribution>{8ccfcdd0-7b0b-47d0-b872-1839e3459eb7}</Implicit_Jitter_Distribution>
     <LibraryReferences>{0cb26125-940b-4353-a91d-9cc5ef6de205}</LibraryReferences>
-    <Company>AMKO-Engineering</Company>
+    <Company>Industrial Brains B.V.</Company>
     <Released>false</Released>
-    <Title>System_Library</Title>
-    <ProjectVersion>1.6.0.0</ProjectVersion>
+    <Title>IBF_System</Title>
+    <ProjectVersion>0.0.0.0</ProjectVersion>
     <Description>system and module base functions</Description>
-    <Author>Chris van Kooij</Author>
+    <Author>
+    </Author>
+    <LibraryCategories>
+      <LibraryCategory xmlns="">
+        <Id>{25052fee-a005-47ad-93b2-b0f6630efe72}</Id>
+        <Version>1.0.0.0</Version>
+        <DefaultName>Industrial Brains B.V.</DefaultName>
+      </LibraryCategory>
+    </LibraryCategories>
+    <SelectedLibraryCategories>
+      <Id xmlns="">{25052fee-a005-47ad-93b2-b0f6630efe72}</Id>
+    </SelectedLibraryCategories>
+    <CombineIds>true</CombineIds>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PlcTask.TcTTO">
