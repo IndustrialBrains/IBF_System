@@ -12,7 +12,7 @@
 			</Tasks>
 		</System>
 		<Plc>
-			<Project File="AMKO_System.xti"/>
+			<Project File="IBF_System.xti"/>
 		</Plc>
 	</Project>
 </TcSmProject>

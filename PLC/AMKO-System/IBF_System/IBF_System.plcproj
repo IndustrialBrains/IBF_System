@@ -7,7 +7,7 @@
     <DownloadApplicationInfo>true</DownloadApplicationInfo>
     <WriteProductVersion>true</WriteProductVersion>
     <GenerateTpy>false</GenerateTpy>
-    <Name>AMKO_System</Name>
+    <Name>IBF_System</Name>
     <ProgramVersion>3.1.4023.0</ProgramVersion>
     <Application>{281f8630-2b94-4e2f-aa09-ab244a6704b1}</Application>
     <TypeSystem>{8635e9b6-284d-420f-8c38-e4ddcd94a0e2}</TypeSystem>
@@ -114,7 +114,7 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="AMKO_System.tmc">
+    <None Include="IBF_System.tmc">
       <SubType>Content</SubType>
     </None>
   </ItemGroup>
