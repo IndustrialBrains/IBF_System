@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="Fb_SystemFaultHandler" Id="{63d9dbdb-7a1d-43ad-9d1e-008ba0d86cdf}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL Fb_SystemFaultHandler
 VAR_INPUT
@@ -87,10 +87,15 @@ VAR
 	p				: UDINT	;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Go over modules to check for fault messages 
+        <ST><![CDATA[{warning disable C0371}
+IF NOT __ISVALIDREF(arpModules) THEN
+	RETURN;
+END_IF
+
+// Go over modules to check for fault messages 
 FOR i := 1 TO nNumberOfModules DO 
 	// Check for active messages
-	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
+	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO
 		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType <> E_FaultTypes.NA THEN 
 			arTempFaults[p]:= arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j] ;
 			p := MIN( p + 1, Param_Messages.nMAX_MESSAGES_SHOWN);
@@ -102,7 +107,7 @@ END_FOR
 
 arOldFaults		:= arActiveFaults 	;
 arActiveFaults	:= arTempFaults 	;
-]]></ST>
+{warning restore C0371}]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecMessageCompare" Id="{dcd002b7-41ad-4179-b8bd-5d15c68a81f8}" FolderPath="Private\">
