@@ -2,134 +2,30 @@
   <PropertyGroup>
     <FileVersion>1.0.0.0</FileVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{aad70eed-4566-4222-ad89-cf843641d787}</ProjectGuid>
+    <ProjectGuid>{415f3d5f-c342-42ea-8090-affbdc07443a}</ProjectGuid>
     <SubObjectsSortedByName>True</SubObjectsSortedByName>
     <DownloadApplicationInfo>true</DownloadApplicationInfo>
     <WriteProductVersion>true</WriteProductVersion>
     <GenerateTpy>false</GenerateTpy>
     <Name>AMKO_System</Name>
     <ProgramVersion>3.1.4023.0</ProgramVersion>
-    <Application>{ecaf87fb-367a-49c9-864c-fb70e7a1e2f3}</Application>
-    <TypeSystem>{3a0aab8f-a265-4e5d-94f9-a6441662778f}</TypeSystem>
-    <Implicit_Task_Info>{6dbe46fb-3759-474f-b0f0-93903e515979}</Implicit_Task_Info>
-    <Implicit_KindOfTask>{ef7da377-4cf5-4908-8fb3-7199d4f55787}</Implicit_KindOfTask>
-    <Implicit_Jitter_Distribution>{686ac721-1236-4832-99b3-774985250b9a}</Implicit_Jitter_Distribution>
-    <LibraryReferences>{45ff38d9-367f-4ff7-9816-0dab6feb3c51}</LibraryReferences>
+    <Application>{281f8630-2b94-4e2f-aa09-ab244a6704b1}</Application>
+    <TypeSystem>{8635e9b6-284d-420f-8c38-e4ddcd94a0e2}</TypeSystem>
+    <Implicit_Task_Info>{ccefcd67-af2a-44be-b494-b46b33024723}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{be9180ad-8a4c-4d7d-951a-c46c3aed8ad5}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{8ccfcdd0-7b0b-47d0-b872-1839e3459eb7}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{0cb26125-940b-4353-a91d-9cc5ef6de205}</LibraryReferences>
     <Company>AMKO-Engineering</Company>
     <Released>false</Released>
     <Title>System_Library</Title>
-    <ProjectVersion>1.5.0.0</ProjectVersion>
+    <ProjectVersion>1.6.0.0</ProjectVersion>
+    <Description>system and module base functions</Description>
     <Author>Chris van Kooij</Author>
-    <Description>system and module base functions </Description>
-    <LibraryCategories>
-      <LibraryCategory xmlns="">
-        <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        <Version>1.0.0.0</Version>
-        <DefaultName>AMKO-Engineering</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{9052c1da-2179-403f-9f0a-49f63df589e9}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>System</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{d69a4e54-3b9a-4ecc-8074-fff937c26a40}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>Utillities</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{eb954523-a8af-4bd0-a32c-f81936b81c6d}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>HMI</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{846be616-7077-49df-82d2-98e957c13e93}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>Machines</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{009e50f4-d2ac-459e-96fa-8b145dea1d14}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>Devices</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{3ea1b3cc-00d0-4410-912b-09df72d0dc78}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>MLT</DefaultName>
-      </LibraryCategory>
-      <LibraryCategory xmlns="">
-        <Id>{7456e3ea-ab98-4ec9-850d-33c9c8b9ad33}</Id>
-        <Version>1.0.0.0</Version>
-        <ParentCategory>
-          <Id>{589fe09e-9317-462c-ba3b-ceb72fa5d919}</Id>
-        </ParentCategory>
-        <DefaultName>Sewinghead</DefaultName>
-      </LibraryCategory>
-    </LibraryCategories>
-    <SelectedLibraryCategories>
-      <Id xmlns="">{9052c1da-2179-403f-9f0a-49f63df589e9}</Id>
-    </SelectedLibraryCategories>
   </PropertyGroup>
   <ItemGroup>
-    <PlaceholderReference Include="Device_Library">
-      <DefaultResolution>Device_Library, * (AMKO-Engineering)</DefaultResolution>
-      <Namespace>Device_Library</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="HMI_Library">
-      <DefaultResolution>HMI_Library, * (AMKO-Engineering)</DefaultResolution>
-      <Namespace>HMI_Library</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc2_Standard">
-      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_Standard</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc2_System">
-      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_System</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Tc2_Utilities">
-      <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc2_Utilities</Namespace>
-    </PlaceholderReference>
-    <PlaceholderReference Include="Utilities_Library">
-      <DefaultResolution>Utilities_Library, * (AMKO-Engineering)</DefaultResolution>
-      <Namespace>Utilities_Library</Namespace>
-      <Parameters>
-        <Parameter xmlns="">
-          <Key>SLOGFILE_PATH</Key>
-          <Value>'\Hard Disk\TwinCAT\3.1\Boot\FaultLogs\'</Value>
-        </Parameter>
-      </Parameters>
-    </PlaceholderReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ModuleBase" />
-    <Folder Include="ModuleBase\Base" />
-    <Folder Include="ModuleBase\DataTypes" />
-    <Folder Include="GVLs" />
-    <Folder Include="FaultHandler" />
-    <Folder Include="SystemBase" />
-    <Folder Include="SystemBase\DataTypes" />
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Include="PlcTask.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="FaultHandler\Fb_SystemFaultHandler.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -154,182 +50,60 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ModuleBase" />
+    <Folder Include="ModuleBase\Base" />
+    <Folder Include="ModuleBase\DataTypes" />
+    <Folder Include="GVLs" />
+    <Folder Include="FaultHandler" />
+    <Folder Include="SystemBase" />
+    <Folder Include="SystemBase\DataTypes" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="AMKO-Engineering Devices">
+      <DefaultResolution>Device_Library, * (AMKO-Engineering)</DefaultResolution>
+      <Namespace>Device_Library</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="HMI_Library">
+      <DefaultResolution>HMI_Library, * (AMKO-Engineering)</DefaultResolution>
+      <Namespace>HMI_Library</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Utilities">
+      <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Utilities</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Utilities_Library">
+      <DefaultResolution>Utilities_Library, * (AMKO-Engineering)</DefaultResolution>
+      <Namespace>Utilities_Library</Namespace>
+      <Parameters>
+        <Parameter xmlns="">
+          <Key>SLOGFILE_PATH</Key>
+          <Value>'\Hard Disk\TwinCAT\3.1\Boot\FaultLogs\'</Value>
+        </Parameter>
+      </Parameters>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="AMKO_System.tmc">
       <SubType>Content</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <PlaceholderResolution Include="CAA Callback">
-      <Resolution>CAA Callback Extern, * (CAA Technical Workgroup)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CAA MemBlockMan">
-      <Resolution>CAA Memory Block Manager Extern, * (CAA Technical Workgroup)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CAA Memory">
-      <Resolution>CAA Memory, * (CAA Technical Workgroup)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CAA ResMan">
-      <Resolution>CAA Ressource Manager Extern, * (CAA Technical Workgroup)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CAA Types">
-      <Resolution>CAA Types Extern, * (CAA Technical Workgroup)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpApp">
-      <Resolution>CmpApp, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpBitmapPool">
-      <Resolution>CmpBitmapPool, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpDynamicText">
-      <Resolution>CmpDynamicText, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpEventMgr">
-      <Resolution>CmpEventMgr, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpLog">
-      <Resolution>CmpLog, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpSchedule">
-      <Resolution>CmpSchedule, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpTargetVisu">
-      <Resolution>CmpTargetVisu, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="CmpVisuHandler">
-      <Resolution>CmpVisuHandler, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Collections">
-      <Resolution>Collections, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Component Manager">
-      <Resolution>Component Manager, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Device_Library">
-      <Resolution>Device_Library, * (AMKO-Engineering)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="FloatingPointUtils">
-      <Resolution>FloatingPointUtils, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="HMI_Library">
-      <Resolution>HMI_Library, * (AMKO-Engineering)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Standard">
-      <Resolution>Tc2_Standard, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Standard64">
-      <Resolution>Tc2_Standard, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="StringUtils">
-      <Resolution>StringUtils, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysCpuHandling">
-      <Resolution>SysCpuHandling, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysDir">
-      <Resolution>SysDir, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysFile">
-      <Resolution>SysFile, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysMem">
-      <Resolution>SysMem, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysProcess">
-      <Resolution>SysProcess, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysSem">
-      <Resolution>SysSem, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysShm">
-      <Resolution>SysShm, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysTarget">
-      <Resolution>SysTarget, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuElemBase">
-      <Resolution>VisuElemBase, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuElemMeter">
-      <Resolution>VisuElemMeter, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuElems">
-      <Resolution>VisuElems, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuElemsSpecialControls">
-      <Resolution>VisuElemsSpecialControls, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuElemsWinControls">
-      <Resolution>VisuElemsWinControls, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuElemTextEditor">
-      <Resolution>VisuElemTextEditor, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="system_visuinputs">
-      <Resolution>VisuInputs, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuInputs">
-      <Resolution>VisuInputs, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="System_VisuNativeControl">
-      <Resolution>VisuNativeControl, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysTime">
-      <Resolution>SysTime, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysTimeCore">
-      <Resolution>SysTimeCore, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="SysTimeRtc">
-      <Resolution>SysTimeRtc, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_Drive">
-      <Resolution>Tc2_Drive, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_EtherCAT">
-      <Resolution>Tc2_EtherCAT, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_IoFunctions">
-      <Resolution>Tc2_IoFunctions, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_Math">
-      <Resolution>Tc2_Math, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_MC2">
-      <Resolution>Tc2_MC2, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_MC2_Drive">
-      <Resolution>Tc2_MC2_Drive, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_Standard">
-      <Resolution>Tc2_Standard, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_System">
-      <Resolution>Tc2_System, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc2_Utilities">
-      <Resolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Tc3_Module">
-      <Resolution>Tc3_Module, * (Beckhoff Automation GmbH)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Util">
-      <Resolution>Util, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="Utilities_Library">
-      <Resolution>Utilities_Library, * (AMKO-Engineering)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="VisuDialogs">
-      <Resolution>VisuDialogs, * (System)</Resolution>
-    </PlaceholderResolution>
-    <PlaceholderResolution Include="VisuUserManagement">
-      <Resolution>VisuUserMgmt, * (System)</Resolution>
-    </PlaceholderResolution>
-  </ItemGroup>
   <ProjectExtensions>
     <PlcProjectOptions>
       <XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="OptionKey">
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
       <v n="Name">"&lt;ProjectRoot&gt;"</v>
       <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
         <v>{192FAD59-8248-4824-A8DE-9177C94C195A}</v>
@@ -430,14 +204,14 @@
       </d>
       <d n="Values" t="Hashtable" />
     </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="Hashtable">System.Collections.Hashtable</Type>
-    <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
     </PlcProjectOptions>
   </ProjectExtensions>
 </Project>
