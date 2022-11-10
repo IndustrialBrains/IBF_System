@@ -335,7 +335,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// shutdown emediately if power is down 
 fTrigPowerSupply(CLK := ibPowerSupplyOk);
-ntShutDown(START := bPowerdOff OR fTrigPowerSupply.Q);
+ntShutDown(START := GVL_Main.cbUPSPRESENT AND (bPowerdOff OR fTrigPowerSupply.Q)); 
 
 // ===== Check Air pressure =====
 IF bIcfAirCheckPresent THEN
