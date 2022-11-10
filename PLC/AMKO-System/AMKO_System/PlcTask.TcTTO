@@ -3,9 +3,9 @@
   <Task Name="PlcTask" Id="{34b1778b-afaa-4e8f-aaad-71168067e1ba}">
     <!--CycleTime in micro seconds.-->
     <CycleTime>10000</CycleTime>
-    <Priority>20</Priority>
+    <Priority>6</Priority>
     <PouCall>
-      <Name>SystemBase</Name>
+      <Name>PRG_TEST</Name>
     </PouCall>
     <TaskFBGuid>{54a2241a-1aff-4806-b305-ae39279cdfbe}</TaskFBGuid>
     <Fb_init>{883eb486-bc10-4cf1-9689-8452824a8302}</Fb_init>

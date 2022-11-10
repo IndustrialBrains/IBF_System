@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_DummyModule" Id="{dcc4cad9-3fe5-4429-9581-93b560acb380}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DummyModule EXTENDS Fb_ModuleBase
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SUPER^();
+]]></ST>
+    </Implementation>
+    <Method Name="CallComponents" Id="{d2169844-dc1c-4e3e-913f-09fb324d2664}">
+      <Declaration><![CDATA[METHOD PROTECTED  CallComponents : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CheckCollision" Id="{4937cc26-00d6-4f3c-bf40-11e88c8d667c}">
+      <Declaration><![CDATA[METHOD PROTECTED  CheckCollision : BOOL // Checks device commands for positble collisions  and block if necesarry
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecAutomatic" Id="{f8987ceb-7700-4d0d-85e4-b978cef3372f}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecAutomatic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bAutomatic := TRUE;
+ExecAutomatic := bAutomatic;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecHold" Id="{6ab5aac9-fc82-4cd6-bf01-8fd5a60b4e40}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecHold : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bHeld := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecHome" Id="{aba23217-5a2b-4b12-a81c-f311e2a6942f}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecHome : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bHomed := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecInit" Id="{02ca3dd5-4e2d-4a98-bf2f-6e10b13580f5}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecInit : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[binitialized := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecPowerOff" Id="{3728e047-591f-426b-9524-5995336bc980}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecPowerOff : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bPowerdOff := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecReset" Id="{0c5dc2f5-3abd-4b9c-9ed5-e997d45d1f61}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecReset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bResetDone := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSafeStop" Id="{0c490a3e-95f9-4c45-b60a-0f3b24f8a06a}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecSafeStop : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bIsSafe := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecSemiAuto" Id="{bf50ce99-8fec-4331-bd2e-6977f0dad560}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecSemiAuto : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bSemiAuto := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

@@ -17,6 +17,11 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
+					<Name>SystemBase.ibEstopOk</Name>
+					<Comment><![CDATA[ system emergency stop ok]]></Comment>
+					<Type>BOOL</Type>
+				</Var>
+				<Var>
 					<Name>SystemBase.fbAirpressureOk.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
@@ -27,13 +32,13 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.ibEstopOk</Name>
-					<Comment><![CDATA[ system emergency stop ok]]></Comment>
+					<Name>SystemBase.fbCmdStartSystem.Istatus</Name>
+					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.fbCmdStartSystem.Istatus</Name>
-					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
+					<Name>SystemBase.iSTOFault</Name>
+					<Comment><![CDATA[ Motor safe torque off fault active]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
@@ -69,11 +74,6 @@
 				<Var>
 					<Name>SystemBase.iSafetyOutErr</Name>
 					<Comment><![CDATA[ The "Out Err" group signal]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.iSTOFault</Name>
-					<Comment><![CDATA[ Motor safe torque off fault active]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 			</Vars>
@@ -137,12 +137,12 @@
 					<ManualConfig>
 						<OTCID>#x02010030</OTCID>
 					</ManualConfig>
-					<Priority>20</Priority>
+					<Priority>6</Priority>
 					<CycleTime>10000000</CycleTime>
 				</Context>
 			</Contexts>
 			<TaskPouOids>
-				<TaskPouOid Prio="20" OTCID="#x08502001"/>
+				<TaskPouOid Prio="6" OTCID="#x08502001"/>
 			</TaskPouOids>
 		</Instance>
 	</Project>
