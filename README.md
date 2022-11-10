@@ -1,3 +1,9 @@
-![build](https://github.com/IndustrialBrains/AMKOLib-System/actions/workflows/Build.yml/badge.svg)
+[![GitIgnore](../../actions/workflows/GitIgnore.yml/badge.svg)](../../actions/workflows/GitIgnore.yml)
 
-AMKOLib-System
+# Industrial Brainframe - System library
+
+### TODO
+
+1. Add build action
+1. Add automatic tests
+1. Rename project
