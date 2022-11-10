@@ -128,7 +128,7 @@ FOR i := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO
 	ELSE
 		// check if the fault is still active
 		bFaultFound := FALSE; 
-		FOR j := 0 TO Utilities_Library.Param_Messages.nMAX_MESSAGES_SHOWN DO
+		FOR j := 0 TO IBF_Utilities.Param_Messages.nMAX_MESSAGES_SHOWN DO
 			IF arOldFaults[i].FullFaultId = arActiveFaults[j].FullFaultId THEN
 				bFaultFound := TRUE;
 				EXIT;

@@ -17,11 +17,6 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.ibEstopOk</Name>
-					<Comment><![CDATA[ system emergency stop ok]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
 					<Name>SystemBase.fbAirpressureOk.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
@@ -37,11 +32,6 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.iSTOFault</Name>
-					<Comment><![CDATA[ Motor safe torque off fault active]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
 					<Name>SystemBase.fbCmdStartAuto.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
@@ -49,6 +39,16 @@
 				<Var>
 					<Name>SystemBase.fbCmdStopAuto.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
+					<Type>BOOL</Type>
+				</Var>
+				<Var>
+					<Name>SystemBase.iSafetyOtherErr</Name>
+					<Comment><![CDATA[ The "Other Err" group signal]]></Comment>
+					<Type>BOOL</Type>
+				</Var>
+				<Var>
+					<Name>SystemBase.ibEstopOk</Name>
+					<Comment><![CDATA[ system emergency stop ok]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
@@ -67,13 +67,13 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.iSafetyOtherErr</Name>
-					<Comment><![CDATA[ The "Other Err" group signal]]></Comment>
+					<Name>SystemBase.iSafetyOutErr</Name>
+					<Comment><![CDATA[ The "Out Err" group signal]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.iSafetyOutErr</Name>
-					<Comment><![CDATA[ The "Out Err" group signal]]></Comment>
+					<Name>SystemBase.iSTOFault</Name>
+					<Comment><![CDATA[ Motor safe torque off fault active]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 			</Vars>
