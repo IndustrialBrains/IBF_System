@@ -51,7 +51,7 @@ VAR_OUTPUT
 	bStopping		: BOOL := FALSE ; // MOdule stopping auto cycle
 	
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
-	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
+	bPoweredOff		: BOOL := FALSE ; // Module has powered off 	
 
 	bLocked			: BOOL := FALSE ; // module is locked for commands
 END_VAR
@@ -219,7 +219,7 @@ END_VAR
         <ST><![CDATA[ExecPowerOff();
 bAutomatic := FALSE ;
 
-CmdPowerOff := bPowerdOff;]]></ST>
+CmdPowerOff := bPoweredOff;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdSemiAuto" Id="{791a75b1-1408-4ba1-a250-3359f3233728}" FolderPath="Commands\">

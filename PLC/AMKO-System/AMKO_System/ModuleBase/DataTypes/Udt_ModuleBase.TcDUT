@@ -50,7 +50,7 @@ STRUCT
 	bAutomatic 		: BOOL := FALSE ; // Module Work status Module in Automatic mode
 	
 	bPoweringOff	: BOOL := FALSE ; // Module is powering off
-	bPowerdOff		: BOOL := FALSE ; // Module has powerd off 	
+	bPoweredOff		: BOOL := FALSE ; // Module has powered off 	
 	
 	// manual functions 
 	bDevicesAddedtoManual	: BOOL := FALSE ;

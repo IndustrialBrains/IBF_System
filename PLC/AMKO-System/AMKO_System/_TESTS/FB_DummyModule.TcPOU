@@ -48,7 +48,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bHeld := TRUE;]]></ST>
+        <ST><![CDATA[bHeld := TRUE;
+ExecHold := bHeld;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHome" Id="{aba23217-5a2b-4b12-a81c-f311e2a6942f}">
@@ -58,7 +59,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bHomed := TRUE;
-]]></ST>
+ExecHome:= bHomed;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecInit" Id="{02ca3dd5-4e2d-4a98-bf2f-6e10b13580f5}">
@@ -68,7 +69,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bInitialized := TRUE;
-]]></ST>
+ExecInit := bInitialized;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecPowerOff" Id="{3728e047-591f-426b-9524-5995336bc980}">
@@ -77,8 +78,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bPowerdOff := TRUE;
-]]></ST>
+        <ST><![CDATA[bPoweredOff := TRUE;
+ExecPowerOff := bPoweredOff;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecReset" Id="{0c5dc2f5-3abd-4b9c-9ed5-e997d45d1f61}">
@@ -88,7 +89,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bResetDone := TRUE;
-]]></ST>
+ExecReset := bResetDone;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSafeStop" Id="{0c490a3e-95f9-4c45-b60a-0f3b24f8a06a}">
@@ -98,7 +99,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bIsSafe := TRUE;
-]]></ST>
+ExecSafeStop := bIsSafe;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSemiAuto" Id="{bf50ce99-8fec-4331-bd2e-6977f0dad560}">
@@ -108,7 +109,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[bSemiAuto := TRUE;
-]]></ST>
+ExecSemiAuto := bSemiAuto;]]></ST>
       </Implementation>
     </Method>
   </POU>
