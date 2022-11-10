@@ -32,7 +32,7 @@ VAR_OUTPUT
 	// State indication
 	bIsSafe			: BOOL := FALSE ; // Module is safe and locked until safety is ok
 	bNoreference	: BOOL := FALSE ; // Module Startup Undefined initialization required
-	binitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
+	bInitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
 	bHomed 			: BOOL := FALSE ; // Module startup homed waiting for further further commands
 
 	bHolding 		: BOOL := FALSE ; // Module Module Hold motion command executing
@@ -196,7 +196,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[ExecInit();
 
-CmdInit := binitialized;]]></ST>
+CmdInit := bInitialized;]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdManual" Id="{7a18f16c-cb69-42f0-ab80-bae80d368991}" FolderPath="Commands\">
@@ -293,7 +293,7 @@ END_VAR
 	IF ReCmdReset.Q THEN 
 		bResetDone := FALSE ;
 	ELSIF NOT bResetDone THEN 
-		IF binitialized THEN
+		IF bInitialized THEN
 			bResetDone := ExecReset() AND fbFaultHandler.CmdReset();
 		ELSE
 			bResetDone := TRUE ;		
@@ -362,7 +362,7 @@ END_IF;
 bCmdAckOW := FALSE;
 
 // Check for any Internal collisions
-IF binitialized THEN
+IF bInitialized THEN
 	CheckCollision();
 END_IF
 
@@ -390,7 +390,7 @@ ELSE
 END_IF
 
 // Run Base Functions 
-IF binitialized 
+IF bInitialized 
 AND bEnable
 AND bHomed 
 AND NOT bManual THEN 

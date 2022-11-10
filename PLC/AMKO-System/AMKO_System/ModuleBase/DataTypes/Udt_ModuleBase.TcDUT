@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <DUT Name="Udt_ModuleBase" Id="{11a061a9-9654-4dd2-8413-49d4dc92d1aa}">
     <Declaration><![CDATA[TYPE Udt_ModuleBase :
 STRUCT
@@ -30,7 +30,7 @@ STRUCT
 	bNoreference	: BOOL := FALSE ; // Module Startup Undefined initialization required
 
 	bInitializing	: BOOL := FALSE ; // Module startup initializing
-	binitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
+	bInitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
 
 	bIdle 			: BOOL := FALSE ; // Module startup Idle no commands active
 

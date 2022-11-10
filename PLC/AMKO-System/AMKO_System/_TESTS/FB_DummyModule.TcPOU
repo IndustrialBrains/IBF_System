@@ -67,7 +67,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[binitialized := TRUE;
+        <ST><![CDATA[bInitialized := TRUE;
 ]]></ST>
       </Implementation>
     </Method>

@@ -21,7 +21,7 @@ VAR	// Fault indications
 	bNoreference		: BOOL := FALSE ; // Module Startup Undefined initialization required
 
 	bInitializing		: BOOL := FALSE ; // Module startup initializing
-	binitialized		: BOOL := FALSE ; // Module startup initialized waiting for startup command
+	bInitialized		: BOOL := FALSE ; // Module startup initialized waiting for startup command
 	
 	bParametersLoaded 	: BOOL := FALSE ; // Parameters have been loaded from the file(s) 
 
@@ -149,7 +149,7 @@ ExecSafetyControl();
 // Call faulthandler
 fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						arpModules			:= arpModules,
-						bsystemInitialized	:= binitialized,
+						bsystemInitialized	:= bInitialized,
 						bSystemFF			=> bFatalFault,
 						bSystemCF			=> bCycleFault,
 						bSystemMC			=> bMissingCond,
@@ -163,7 +163,7 @@ IF bFirstCycle THEN
 END_IF
 
 // check system functions
-IF binitialized AND bParametersLoaded THEN 
+IF bInitialized AND bParametersLoaded THEN 
 	CheckSystemOK();
 	CheckSystemCommands();
 END_IF 
@@ -563,7 +563,7 @@ bStartAuto		:= FALSE;
 bStartSemiAuto	:= FALSE;
 
 // Module safe stop
-IF binitialized AND bReferenceOk THEN 
+IF bInitialized AND bReferenceOk THEN 
 	FOR i := 1 TO nNumberOfModules DO 
 		arpModules[i].pFunction^.CmdEstop();
 	END_FOR
@@ -624,7 +624,7 @@ AND NOT iSafetyComErr
 AND NOT iSafetyOtherErr
 AND NOT iSafetyOutErr
 AND NOT iSystemSafetyFault 
-AND binitialized THEN 
+AND bInitialized THEN 
 	qbRunSafety := TRUE ;
 ELSE 
 	qbRunSafety := FALSE;
@@ -927,17 +927,17 @@ fbCmdStopAuto.Init		( 	nId 		:= 6,
 							nParentId	:= 0 );
 							
 // Initialize all modules
-binitialized	:= TRUE ;
+bInitialized	:= TRUE ;
 FOR i := 1 TO nNumberOfModules DO 
-	IF NOT arpModules[i].pFunction^.binitialized THEN 
+	IF NOT arpModules[i].pFunction^.bInitialized THEN 
 		arpModules[i].pFunction^.CmdInit();
 	END_IF
-	binitialized 	:= binitialized AND arpModules[i].pFunction^.binitialized;
-	bInitializing 	:= NOT binitialized ;
+	bInitialized 	:= bInitialized AND arpModules[i].pFunction^.bInitialized;
+	bInitializing 	:= NOT bInitialized ;
 	// Set feedback to screen (needs to be added)
  END_FOR
  
- Init := binitialized ;]]></ST>
+ Init := bInitialized ;]]></ST>
       </Implementation>
     </Method>
   </POU>
