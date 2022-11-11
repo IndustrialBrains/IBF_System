@@ -175,13 +175,14 @@ ELSE
 END_IF
 
 // Cycle through operator messages
-tonOperatorMessageCycle(PT := Param_Messages.tOMCYCLETIME, IN :=NOT tonOperatorMessageCycle.Q);
+tonOperatorMessageCycle(PT := Param_Messages.tOMCYCLETIME, IN := NOT tonOperatorMessageCycle.Q);
 IF tonOperatorMessageCycle.Q THEN
-	nShownOM := nShownOM +1;
-	IF nShownOM >= nNumberOfOM THEN 
-		nShownOM := 0;
+	IF nNumberOfOM > 0 THEN
+		nShownOM := (nShownOM + 1) MOD nNumberOfOM;
+		IBF_Utilities.GVL_Message.sOPeratorMessage := arOperatorMessages[nShownOM];
+	ELSE
+		IBF_Utilities.GVL_Message.sOPeratorMessage := '';
 	END_IF
-	IBF_Utilities.GVL_Message.sOPeratorMessage := arOperatorMessages[nShownOM];
 END_IF
 
 ]]></ST>
