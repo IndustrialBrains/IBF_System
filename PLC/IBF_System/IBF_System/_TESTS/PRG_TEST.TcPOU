@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="PRG_TEST" Id="{8fd80737-52d7-48f7-8910-0003a883abff}" SpecialFunc="None">
-    <Declaration><![CDATA[PROGRAM PRG_TEST
+    <Declaration><![CDATA[PROGRAM INTERNAL PRG_TEST
 VAR
 	fbDummyModule : FB_DummyModule;
 END_VAR
