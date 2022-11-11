@@ -10,7 +10,6 @@ VAR	// Fault indications
 	bMissingCond		: BOOL := FALSE ; // Module missing condition active
 	bFatalFault			: BOOL := FALSE ; // Module fatal fault is active
 	bCycleFault			: BOOL := FALSE ; // Module cycle fault is active
-	bOperatorWarning	: BOOL := FALSE ; // Module operator warning is active
 
 	// Check values
 	bReferenceOk		: BOOL := FALSE ; // All module references  have been checked
@@ -152,8 +151,7 @@ fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
 						bsystemInitialized	:= bInitialized,
 						bSystemFF			=> bFatalFault,
 						bSystemCF			=> bCycleFault,
-						bSystemMC			=> bMissingCond,
-						bSystemOW			=> bOperatorWarning);
+						bSystemMC			=> bMissingCond);
 
 // Check if this is the first cycle the PRG is called
 // if not, return. This is to make sure all modules are connected. 

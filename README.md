@@ -11,6 +11,10 @@
 1. Rename project
 1. (check) force use of access specifiers
 
+### Must have
+
+1. Add tests for operator messages (possibly unstable)
+
 ### Nice 2 have
 
 1. `Fb_ModuleBase`: it seems only `ExecAutomatic` return value is used, why is it different than the rest?
