@@ -371,7 +371,7 @@ bSafeStopping 	R= bIsSafe AND bSystemOK 		;
 		stMessage.Discription	:= 'Main air Pressure low ';
 		stMessage.LocationName	:= 'Main air supply';
 		stMessage.LocationNumber:= 1;
-		stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+		stMessage.FaultType		:= E_FaultTypes.FF;
 		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
 		stMessage.nModuleID		:= 0;
 		GVL_HMI.bEstopActive 	:= TRUE ;
@@ -644,7 +644,7 @@ IF iSafetyFBErr THEN
 	stMessage.Discription	:= 'Safety program is in fault state.';
 	stMessage.LocationName	:= 'Main safety';
 	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+	stMessage.FaultType		:= E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state.';
@@ -658,7 +658,7 @@ ELSIF iSafetyComErr THEN
 	stMessage.Discription	:= 'Emergency stop fault, check emergency button wiring ';
 	stMessage.LocationName	:= 'Emergency stop safety';
 	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+	stMessage.FaultType		:= E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check emergency button wiring ';
@@ -672,7 +672,7 @@ ELSIF iSafetyOutErr THEN
 	stMessage.Discription	:= 'Emergency stop fault, check wiring ';
 	stMessage.LocationName	:= 'Emergency stop safety';
 	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+	stMessage.FaultType		:= E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check wiring ';
@@ -686,7 +686,7 @@ ELSIF iSafetyOtherErr THEN
 	stMessage.Discription	:= 'Safety program is in fault state. ';
 	stMessage.LocationName	:= 'Emergency stop safety';
 	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+	stMessage.FaultType		:= E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state. ';
@@ -701,7 +701,7 @@ ELSIF iSystemSafetyFault THEN
 	stMessage.Discription	:= 'Collision safety fault, check collision detection wiring ';
 	stMessage.LocationName	:= 'Collision safety';
 	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+	stMessage.FaultType		:= E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'System safety fault, check wiring ';
@@ -713,7 +713,7 @@ ELSIF iSTOFault THEN
 	stMessage.Discription	:= 'Collision safety fault, check collision detection wiring ';
 	stMessage.LocationName	:= 'Collision safety';
 	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= IBF_Utilities.E_FaultTypes.FF;
+	stMessage.FaultType		:= E_FaultTypes.FF;
 	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
 	stMessage.nModuleID		:= 0;
 	GVL_HMI.sCmdEstopText 	:= 'Motor safe torque off fault';
