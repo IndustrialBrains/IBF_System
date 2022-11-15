@@ -53,7 +53,7 @@ VAR CONSTANT
 									FaultType 		:= E_FaultTypes.NA,
 									MessageNumber	:= 0,
 									LocationNumber	:= 0,
-									Discription 	:= '',
+									Description 	:= '',
 									LocationName	:= '',
 									ComponentType	:= E_ComponentTypes.NA,
 									StartTime		:= DT#2020-1-1-00:00:00,
@@ -104,7 +104,7 @@ FOR i := 1 TO nNumberOfModules DO
 	// Check for active messages
 	FOR j := 0 TO Param_Messages.nMAX_MESSAGES_SHOWN DO 
 		IF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType = E_FaultTypes.OM THEN 
-			arOperatorMessages[nNumberOfOM] := arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].Discription ;
+			arOperatorMessages[nNumberOfOM] := arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].Description ;
 			nNumberOfModules := MIN(nNumberOfOM + 1, Param_Messages.nMAX_MESSAGES_SHOWN);		
 		ELSIF arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j].FaultType > E_FaultTypes.OM THEN 
 			arTempFaults[p]:= arpModules[i].pFunction^.fbFaultHandler.arActiveFaults[j] ;
@@ -281,7 +281,7 @@ CASE nWriteStep OF
 		sMessageString[2]	:= DT_TO_STRING(Sys_Variables.SystemTime			);
 		sMessageString[3]	:= UDINT_TO_STRING(arWriteToLog[p].MessageNumber	);
 		sMessageString[4]	:= UDINT_TO_STRING(arWriteToLog[p].LocationNumber	); 
-		sMessageString[5]	:= arWriteToLog[p].Discription						;
+		sMessageString[5]	:= arWriteToLog[p].Description						;
 		sMessageString[6]	:= arWriteToLog[p].LocationName						;
 		sMessageString[7]	:= TO_STRING(arWriteToLog[p].ComponentType			);
 		// write data to .csv buffer 

@@ -368,7 +368,7 @@ bSafeStopping 	R= bIsSafe AND bSystemOK 		;
 	IF NOT bAirOk THEN
 		stMessage.Active 		:= TRUE ;
 		stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-		stMessage.Discription	:= 'Main air Pressure low ';
+		stMessage.Description	:= 'Main air Pressure low ';
 		stMessage.LocationName	:= 'Main air supply';
 		stMessage.LocationNumber:= 1;
 		stMessage.FaultType		:= E_FaultTypes.FF;
@@ -641,7 +641,7 @@ IF iSafetyFBErr THEN
 	END_IF
 	stMessage.Active := TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Safety program is in fault state.';
+	stMessage.Description	:= 'Safety program is in fault state.';
 	stMessage.LocationName	:= 'Main safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= E_FaultTypes.FF;
@@ -655,7 +655,7 @@ ELSIF iSafetyComErr THEN
 	END_IF
 	stMessage.Active 		:= TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Emergency stop fault, check emergency button wiring ';
+	stMessage.Description	:= 'Emergency stop fault, check emergency button wiring ';
 	stMessage.LocationName	:= 'Emergency stop safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= E_FaultTypes.FF;
@@ -669,7 +669,7 @@ ELSIF iSafetyOutErr THEN
 	END_IF
 	stMessage.Active 		:= TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Emergency stop fault, check wiring ';
+	stMessage.Description	:= 'Emergency stop fault, check wiring ';
 	stMessage.LocationName	:= 'Emergency stop safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= E_FaultTypes.FF;
@@ -683,7 +683,7 @@ ELSIF iSafetyOtherErr THEN
 	END_IF
 	stMessage.Active 		:= TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Safety program is in fault state. ';
+	stMessage.Description	:= 'Safety program is in fault state. ';
 	stMessage.LocationName	:= 'Emergency stop safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= E_FaultTypes.FF;
@@ -698,7 +698,7 @@ ELSIF iSystemSafetyFault THEN
 	END_IF
 	stMessage.Active 		:= TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Collision safety fault, check collision detection wiring ';
+	stMessage.Description	:= 'Collision safety fault, check collision detection wiring ';
 	stMessage.LocationName	:= 'Collision safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= E_FaultTypes.FF;
@@ -710,7 +710,7 @@ ELSIF iSTOFault THEN
 	qbSTOErrAckn 			:= Sys_Variables.HeartBeat ;
 	stMessage.Active 		:= TRUE ;
 	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Discription	:= 'Collision safety fault, check collision detection wiring ';
+	stMessage.Description	:= 'Collision safety fault, check collision detection wiring ';
 	stMessage.LocationName	:= 'Collision safety';
 	stMessage.LocationNumber:= 1;
 	stMessage.FaultType		:= E_FaultTypes.FF;
