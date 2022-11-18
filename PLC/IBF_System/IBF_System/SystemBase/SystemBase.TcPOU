@@ -757,7 +757,7 @@ CASE eStateSystem OF
 		IBF_HMI.GVL_HMI.bCmdAutomatic	:= FALSE;
 		IBF_HMI.GVL_HMI.bCmdSettings	:= FALSE;
 		IBF_HMI.GVL_HMI.bCmdManual		:= FALSE;
-		IBF_HMI.GVL_HMI.bCmdParemeter	:= FALSE;
+		IBF_HMI.GVL_HMI.bCmdParameter	:= FALSE;
 		IBF_HMI.GVL_HMI.eShownScreen	:= E_BaseVisu.Idle;
 		bHomed			:= FALSE ;
 		bEnabled		:= FALSE ;
