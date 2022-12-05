@@ -224,7 +224,7 @@ FOR i := 1 TO nNumberOfModules DO
 	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone	;
 	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual		;
 	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto	;
-	bPoweredOff 		:= arpModules[i].pFunction^.bPoweredOff 		AND bPoweredOff	;
+	bPoweredOff 	:= arpModules[i].pFunction^.bPoweredOff 	AND bPoweredOff	;
 	bHomed			:= arpModules[i].pFunction^.bHomed			AND bHomed 		;
 	bPaused			:= arpModules[i].pFunction^.bPaused			AND bPaused		;
 	bModuleLocked	S= arpModules[i].pFunction^.bLocked							; // Module is locked for commnds
@@ -261,7 +261,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// call parameter handler
-GVL_Parameters.fbParameterHandler();
+GVL_Parameters.fbParameterHandler(refFbFault := fbFaultHandler);
 IBF_Devices.GVL_DevManual.fbManualControler();
 
 // Execute button functions 
@@ -766,14 +766,12 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.Initialize:
 		IF Init() THEN
-			eStateSystem := E_StateSystem.LoadParameters	;
+			eStateSystem := E_StateSystem.LoadParameters;
 		END_IF
 	E_StateSystem.LoadParameters:
 		bParametersLoaded := GVL_Parameters.fbParameterHandler.Init(); 
-		IF bParametersLoaded THEN
+		IF bParametersLoaded OR GVL_Parameters.fbParameterHandler.bFault THEN
 			eStateSystem := E_StateSystem.Safe ;
-		ELSIF GVL_Parameters.fbParameterHandler.bError THEN 
-			eStateSystem := E_StateSystem.NoReference ;
 		END_IF
 	E_StateSystem.Safe:
 		IF bIsSafe 
