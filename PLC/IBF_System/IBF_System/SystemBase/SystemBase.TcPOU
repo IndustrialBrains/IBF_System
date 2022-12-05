@@ -161,7 +161,7 @@ IF bFirstCycle THEN
 END_IF
 
 // check system functions
-IF bInitialized AND bParametersLoaded THEN 
+IF bInitialized THEN 
 	CheckSystemOK();
 	CheckSystemCommands();
 END_IF 
@@ -613,7 +613,7 @@ fbCmdResetSafety(	tDelay			:= T#30S ,
 					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
 					refFbFault 		:= fbFaultHandler); 
 
-// Link Safetty Reset
+// Link safety reset
 qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
 
 // Set safety system in run mode
@@ -929,11 +929,11 @@ FOR i := 1 TO nNumberOfModules DO
 		arpModules[i].pFunction^.CmdInit();
 	END_IF
 	bInitialized 	:= bInitialized AND arpModules[i].pFunction^.bInitialized;
-	bInitializing 	:= NOT bInitialized ;
-	// Set feedback to screen (needs to be added)
  END_FOR
  
- Init := bInitialized ;]]></ST>
+bInitializing 	:= NOT bInitialized ;
+Init := bInitialized ;
+]]></ST>
       </Implementation>
     </Method>
   </POU>
