@@ -1,4 +1,4 @@
-"""Tests for Snijmachine.sln"""
+"""Tests for IBF_System.sln"""
 # pylint: disable=missing-function-docstring, missing-class-docstring
 import sys
 import unittest
@@ -9,7 +9,7 @@ COLD_RESET = False
 COLD_RESET = True
 
 
-class TestSnijmachine(unittest.TestCase):
+class TestSystem(unittest.TestCase):
 
     PREFIX = "SystemBase"
 
@@ -37,6 +37,10 @@ class TestSnijmachine(unittest.TestCase):
     def _initalize(self):
         """After cold reset, system ends up in state `Safe`"""
         wait_cycles(7)  # it takes 7 cycles to initialize (tested with breakpoint)
+        self.assertEqual(
+            conn.read_by_name(f"{self.PREFIX}.fbFaultHandler.nActiveFaults"),
+            0,
+        )
 
     def _enable(self):
         """Move from state `Safe` to state `Enable`"""

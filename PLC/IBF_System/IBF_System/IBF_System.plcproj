@@ -48,9 +48,6 @@
     <Compile Include="ModuleBase\Base\Fb_ModuleBase.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ModuleBase\DataTypes\Udt_ModuleBase.TcDUT">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="SystemBase\DataTypes\E_StateSystem.TcTLEO">
       <SubType>Code</SubType>
     </Compile>
@@ -70,7 +67,6 @@
   <ItemGroup>
     <Folder Include="ModuleBase" />
     <Folder Include="ModuleBase\Base" />
-    <Folder Include="ModuleBase\DataTypes" />
     <Folder Include="GVLs" />
     <Folder Include="FaultHandler" />
     <Folder Include="_TESTS" />
@@ -89,6 +85,12 @@
     <PlaceholderReference Include="IBF_Utilities">
       <DefaultResolution>IBF_Utilities, * (Industrial Brains B.V.)</DefaultResolution>
       <Namespace>IBF_Utilities</Namespace>
+      <Parameters>
+        <Parameter ListName="PARAM_MESSAGES" xmlns="">
+          <Key>TMESSAGE_TIMEOUT</Key>
+          <Value>TIME#5s0ms</Value>
+        </Parameter>
+      </Parameters>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Standard">
       <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
