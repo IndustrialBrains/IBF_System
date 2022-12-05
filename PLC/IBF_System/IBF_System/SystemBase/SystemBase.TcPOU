@@ -87,6 +87,8 @@ VAR
 	bAirOk						: BOOL := FALSE ; // Air pressure is ok 
 	bSystemOK					: BOOL := FALSE ; // all safety and vitals are OK
 	eStateSystem				: E_StateSystem := E_StateSystem.NoReference ; // State of system
+	sStateSystem				: STRING; // String representation of the system state
+	
 	// Set system variables
 	fbSetSystemVariables		: Fb_SystemVariables ;
 	
@@ -884,6 +886,8 @@ CASE eStateSystem OF
 END_CASE
 
 bModuleLocked := FALSE ;
+
+sStateSystem := TO_STRING(eStateSystem);
 ]]></ST>
       </Implementation>
     </Method>

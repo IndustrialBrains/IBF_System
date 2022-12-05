@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <EnumerationTextList Name="E_StateSystem" Id="{e1b3949c-1926-4ece-ac62-019c23745b70}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 {attribute 'strict'}
@@ -11,7 +11,7 @@ TYPE E_StateSystem :
 	LoadParameters	, 	// System is loading parameters from/to file
 	Safe			, 	// System is in safety state
 	Enable			, 	// System is enabling 
-	Home			, 	// system is hominig 
+	Home			, 	// system is homing 
 	Resetting		, 	// System is resetting
 	Idle			, 	// system is waiting for commands
 	Manual			, 	// System is in manual mode
