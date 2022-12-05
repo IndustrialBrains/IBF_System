@@ -483,7 +483,8 @@ FOR i := 1 TO nNumberOfModules DO
 	END_IF
 END_FOR
  
-ExecHoming := bHomed ;]]></ST>
+bHoming := NOT bHomed;
+ExecHoming := bHomed;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecManual" Id="{1eeb2405-fd6d-491e-8ef7-e639f5684ed3}" FolderPath="ModuleFunctions\">
