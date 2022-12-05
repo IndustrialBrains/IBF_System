@@ -361,9 +361,6 @@ END_IF
 		eStateSystem := E_StateSystem.Fault ;
 	END_IF
 
-// ===== release system stop =====
-bSafeStopping 	R= bIsSafe AND bSystemOK 		;
-	
 // ===== System messages ======
 	IF NOT bAirOk THEN
 		stMessage.Active 		:= TRUE ;
@@ -553,9 +550,7 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bSafeStopping 	S= NOT bIsSafe ;
-
-bEnabling		:= FALSE;
+        <ST><![CDATA[bEnabling		:= FALSE;
 bInitializing	:= FALSE;
 bHoming			:= FALSE;
 bStartAuto		:= FALSE;
@@ -775,12 +770,13 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Safe ;
 		END_IF
 	E_StateSystem.Safe:
+		bSafeStopping := NOT bIsSafe;
 		IF bIsSafe 
 		AND bSystemOK THEN 
 			IF bFatalFault OR bCycleFault THEN
 				eStateSystem := E_StateSystem.Fault ;
 			ELSE
-				eStateSystem 	:= E_StateSystem.Enable;
+				eStateSystem := E_StateSystem.Enable;
 			END_IF
 		ELSIF fbResetSystem.bFeStatus THEN
 			eStateSystem	:= E_StateSystem.Resetting;
