@@ -4,7 +4,7 @@
     <Declaration><![CDATA[{attribute 'reflection'}
 FUNCTION_BLOCK PUBLIC ABSTRACT Fb_ModuleBase
 VAR_INPUT
-	nModuleID			: 	UDINT 	:= 1 	; // module reference number used for fault, enable, reset, and safety functions (default := 1, 0 = main system)
+	nModuleID			: 	UINT 	:= 1 	; // module reference number used for fault, enable, reset, and safety functions (default := 1, 0 = main system)
 	// main system Inputs
 	bEnable				: 	BOOL	:= FALSE ; // (autolinked) module enable 	
 	bCmdReset 			: 	BOOL	:= FALSE ; // (AutoLinked) reset all faults 
@@ -15,10 +15,9 @@ VAR_INPUT
 	bSafetyOK			: BOOL := FALSE ; // Module internal safety is ok
 END_VAR
 VAR_OUTPUT
-	sName 				: STRING 	:= 'NA' 			; // Module name
+	stIdentity			: UDT_Identity;
 	bAddedToSystem		: BOOL 		:= FALSE 			; // module has been added to the system
  	// Com to main system
-	fbFaultHandler		: 	Fb_FaultHandler 		; // Fault handler 
 	sStateIndicator		: 	STRING := ''			; // Operator message, indication of current step or function 
 
 	// Fault indications
@@ -64,7 +63,7 @@ VAR
 	// Persistent data
 	bCmdWritePersistent : BOOL := FALSE ; // write persistent data to memory
 	// Module data
-	stMessage			: UDT_Fault			; // Message data
+	stFault			: UDT_Fault			; // Message data
 	// Function path 
 	{attribute 'instance-path'} 
     {attribute 'noinit'}
@@ -73,8 +72,9 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Get device name from function
-IF sName = 'NA' THEN 
-	sName := F_FBNameFromPath(sPath := sPath);
+IF stIdentity.sName = '' THEN 
+	stIdentity.nId := nModuleID;
+	stIdentity.sName := F_FBNameFromPath(sPath := sPath);
 END_IF
 
 // Add module to system
@@ -274,18 +274,18 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Call message function
-	fbFaultHandler();
-	fbFaultHandler.CmdAddFault( stFault := stMessage );
+	GVL_Utilities.fbFaultHandler.CmdAddFault( stFault := stFault, stIdentity);
 
-	bFatalFault := fbFaultHandler.bActFF ;
-	bCycleFault := fbFaultHandler.bActCF ;
+	// TODO: the stuff below should be handled by the system, not the module???
+//	bFatalFault := fbFaultHandler.bActFF ;
+//	bCycleFault := fbFaultHandler.bActCF ;
 	
-	IF bFatalFault THEN
-		ExecSafeStop()	;
-	ELSIF bCycleFault THEN
-		bHeld			S= ExecHold();
-		bHolding 		:= NOT bHeld ;
-	END_IF
+//	IF bFatalFault THEN
+//		ExecSafeStop()	;
+//	ELSIF bCycleFault THEN
+//		bHeld			S= ExecHold();
+//		bHolding 		:= NOT bHeld ;
+//	END_IF
 
 // Call reset functions
 	ReCmdReset( CLK := bCmdReset);
@@ -294,7 +294,7 @@ END_VAR
 		bResetDone := FALSE ;
 	ELSIF NOT bResetDone THEN 
 		IF bInitialized THEN
-			bResetDone := ExecReset() AND fbFaultHandler.CmdReset();
+			bResetDone := ExecReset() AND GVL_Utilities.fbFaultHandler.CmdReset();
 		ELSE
 			bResetDone := TRUE ;		
 		END_IF

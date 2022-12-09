@@ -40,6 +40,7 @@
     </Compile>
     <Compile Include="FaultHandler\Fb_SystemFaultHandler.TcPOU">
       <SubType>Code</SubType>
+      <ExcludeFromBuild>true</ExcludeFromBuild>
     </Compile>
     <Compile Include="GVLs\GVL_Main.TcGVL">
       <SubType>Code</SubType>
@@ -85,12 +86,6 @@
     <PlaceholderReference Include="IBF_Utilities">
       <DefaultResolution>IBF_Utilities, * (Industrial Brains B.V.)</DefaultResolution>
       <Namespace>IBF_Utilities</Namespace>
-      <Parameters>
-        <Parameter ListName="PARAM_MESSAGES" xmlns="">
-          <Key>TMESSAGE_TIMEOUT</Key>
-          <Value>TIME#5s0ms</Value>
-        </Parameter>
-      </Parameters>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Standard">
       <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>

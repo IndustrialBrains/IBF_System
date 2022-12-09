@@ -93,12 +93,11 @@ VAR
 	fbSetSystemVariables		: Fb_SystemVariables ;
 	
 	// System Fault handling
-	fbSystemFaultHandler		: Fb_SystemFaultHandler ;
-	fbOperatorMessage			: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
+//	fbSystemFaultHandler		: Fb_SystemFaultHandler ;
+//	fbOperatorMessage			: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
 
 	// Local Fault Handling
-	fbFaultHandler				: Fb_FaultHandler 		; // Fault handler 
-	stMessage					: UDT_Fault			; // Message data
+	stFault					: UDT_Fault			; // Message data
 
  	// Module states
 	nNumberOfModules			: UDINT := 0 ; // Number of modules added to the system 
@@ -148,12 +147,12 @@ END_VAR]]></Declaration>
 ExecSafetyControl();
 
 // Call faulthandler
-fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
-						arpModules			:= arpModules,
-						bsystemInitialized	:= bInitialized,
-						bSystemFF			=> bFatalFault,
-						bSystemCF			=> bCycleFault,
-						bSystemMC			=> bMissingCond);
+//fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
+//						arpModules			:= arpModules,
+//						bsystemInitialized	:= bInitialized,
+//						bSystemFF			=> bFatalFault,
+//						bSystemCF			=> bCycleFault,
+//						bSystemMC			=> bMissingCond);
 
 // Check if this is the first cycle the PRG is called
 // if not, return. This is to make sure all modules are connected. 
@@ -263,37 +262,29 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// call parameter handler
-GVL_Parameters.fbParameterHandler(refFbFault := fbFaultHandler);
+GVL_Parameters.fbParameterHandler();
 IBF_Devices.GVL_DevManual.fbManualControler();
 
 // Execute button functions 
 fbStartAuto		( 	tDelay			:= T#100MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler );
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
 fbStartSemiAuto ( 	tDelay			:= T#100MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler ); 
-fbResetSystem 	( 	Istatus			:= GVL_Message.bResetFaults,
-					tDelay			:= T#5000MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler ); 
-fbAckWarning	(	Istatus			:= GVL_Message.bAckWarnings,
-					tDelay			:= T#100MS,
-					refFbManualCtrl := IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler );
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
+fbResetSystem 	( 	tDelay			:= T#5000MS,
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
+//fbAckWarning	(	Istatus			:= GVL_Message.bAckWarnings,
+//					tDelay			:= T#100MS,
+//					refFbManualCtrl := IBF_Devices.GVL_DevManual.fbManualControler,
+//					refFbFault 		:= fbFaultHandler );
 
-fbCmdStartSystem(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler);
-fbCmdStartAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler);
-fbCmdStopAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler);
+fbCmdStartSystem(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+fbCmdStartAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+fbCmdStopAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
 
 // execute input functions
 fbValveMainAirSupply(	bEnable			:= TRUE,
 						bSafetyOk		:= ibEstopOk,
-						refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-						refFbFault 		:= fbFaultHandler);
+						refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
 
 // Add device functions to manual controller 
 IF NOT bDevicesAddedtoManual THEN
@@ -339,8 +330,7 @@ ntShutDown(START := GVL_Main.cbUPSPRESENT AND (bPoweredOff OR fTrigPowerSupply.Q
 
 // ===== Check Air pressure =====
 IF bIcfAirCheckPresent THEN
-	fbAirpressureOk(refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler);
+	fbAirpressureOk(refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
 	bAirOk := fbAirpressureOk.bFcoDelay ;
 ELSE
 	bAirOk := TRUE ;
@@ -365,14 +355,9 @@ END_IF
 
 // ===== System messages ======
 	IF NOT bAirOk THEN
-		stMessage.Active 		:= TRUE ;
-		stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-		stMessage.Description	:= 'Main air Pressure low ';
-		stMessage.LocationName	:= 'Main air supply';
-		stMessage.LocationNumber:= 1;
-		stMessage.FaultType		:= E_FaultTypes.FF;
-		stMessage.MessageNumber	:= E_MessageNumbers.FF_Overload;
-		stMessage.nModuleID		:= 0;
+		stFault.Active 		:= TRUE ;
+		stFault.Description	:= 'Main air Pressure low ';
+		stFault.FaultType		:= E_FaultTypes.FF;
 		GVL_HMI.bEstopActive 	:= TRUE ;
 		GVL_HMI.sCmdEstopText 	:= 'AIR PRESSURE LOW';
 	END_IF
@@ -401,7 +386,7 @@ FOR i:= 1 TO GVL_Main.cnMaxNUMBEROFMODULES DO
 	IF arpModules[i].pFunction = 0 THEN 
 		nNumberOfModules:= i;
 		EXIT;	
-	ELSIF arpModules[i].sName = refToModule.sName THEN 
+	ELSIF arpModules[i].sName = refToModule.stIdentity.sName THEN 
 		bModuleAdded := TRUE ;
 	END_IF 
 END_FOR
@@ -409,7 +394,7 @@ END_FOR
 // If device is not found add device to the list
 IF NOT bModuleAdded AND nNumberOfModules >= 1 AND nNumberOfModules <= GVL_Main.cnMaxNUMBEROFMODULES THEN
 	arpModules[nNumberOfModules].nNumber 	:= refToModule.nModuleID;
-	arpModules[nNumberOfModules].sName		:= refToModule.sName	;
+	arpModules[nNumberOfModules].sName		:= refToModule.stIdentity.sName	;
 	arpModules[nNumberOfModules].pFunction 	:= ADR(refToModule)		;	
 	bModuleAdded := TRUE ;
 END_IF
@@ -608,8 +593,7 @@ END_IF
 
 // Safety reset button function
 fbCmdResetSafety(	tDelay			:= T#30S ,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler,
-					refFbFault 		:= fbFaultHandler); 
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
 
 // Link safety reset
 qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
@@ -637,83 +621,54 @@ IF iSafetyFBErr THEN
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE; 
 	END_IF
-	stMessage.Active := TRUE ;
-	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Description	:= 'Safety program is in fault state.';
-	stMessage.LocationName	:= 'Main safety';
-	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= E_FaultTypes.FF;
-	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
-	stMessage.nModuleID		:= 0;
+	stFault.Active := TRUE ;
+	stFault.Description	:= 'Safety program is in fault state.';
+	stFault.FaultType		:= E_FaultTypes.FF;
+
 	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state.';
 ELSIF iSafetyComErr THEN
 	GVL_HMI.sCmdEstopText 	:= 'Safety program com error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
-	stMessage.Active 		:= TRUE ;
-	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Description	:= 'Emergency stop fault, check emergency button wiring ';
-	stMessage.LocationName	:= 'Emergency stop safety';
-	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= E_FaultTypes.FF;
-	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
-	stMessage.nModuleID		:= 0;
+	stFault.Active 		:= TRUE ;
+	stFault.Description	:= 'Emergency stop fault, check emergency button wiring ';
+	stFault.FaultType		:= E_FaultTypes.FF;
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check emergency button wiring ';
 ELSIF iSafetyOutErr THEN
 	GVL_HMI.sCmdEstopText 	:= 'Safety program out error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
-	stMessage.Active 		:= TRUE ;
-	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Description	:= 'Emergency stop fault, check wiring ';
-	stMessage.LocationName	:= 'Emergency stop safety';
-	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= E_FaultTypes.FF;
-	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
-	stMessage.nModuleID		:= 0;
+	stFault.Active 		:= TRUE ;
+	stFault.Description	:= 'Emergency stop fault, check wiring ';
+	stFault.FaultType		:= E_FaultTypes.FF;
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check wiring ';
 ELSIF iSafetyOtherErr THEN
 	GVL_HMI.sCmdEstopText 	:= 'Safety program other error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
-	stMessage.Active 		:= TRUE ;
-	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Description	:= 'Safety program is in fault state. ';
-	stMessage.LocationName	:= 'Emergency stop safety';
-	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= E_FaultTypes.FF;
-	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
-	stMessage.nModuleID		:= 0;
+	stFault.Active 		:= TRUE ;
+	stFault.Description	:= 'Safety program is in fault state. ';
+	stFault.FaultType		:= E_FaultTypes.FF;
 	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state. ';
 ELSIF iSystemSafetyFault THEN
 // System safety function faults 
-	GVL_HMI.sCmdEstopText 	:= 'Collision detection Fault check sensor wiring';
+	GVL_HMI.sCmdEstopText 	:= 'Collision detection fault, check sensor wiring';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
-	stMessage.Active 		:= TRUE ;
-	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Description	:= 'Collision safety fault, check collision detection wiring ';
-	stMessage.LocationName	:= 'Collision safety';
-	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= E_FaultTypes.FF;
-	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
-	stMessage.nModuleID		:= 0;
+	stFault.Active 		:= TRUE ;
+	stFault.Description	:= 'Collision safety fault, check collision detection wiring ';
+	stFault.FaultType		:= E_FaultTypes.FF;
 	GVL_HMI.sCmdEstopText 	:= 'System safety fault, check wiring ';
 ELSIF iSTOFault THEN
 	GVL_HMI.sCmdEstopText 	:= 'Motor safety fault';
 	qbSTOErrAckn 			:= Sys_Variables.HeartBeat ;
-	stMessage.Active 		:= TRUE ;
-	stMessage.ComponentType	:= E_ComponentTypes.SafeIO ;
-	stMessage.Description	:= 'Collision safety fault, check collision detection wiring ';
-	stMessage.LocationName	:= 'Collision safety';
-	stMessage.LocationNumber:= 1;
-	stMessage.FaultType		:= E_FaultTypes.FF;
-	stMessage.MessageNumber	:= E_MessageNumbers.FF_Unknown;
-	stMessage.nModuleID		:= 0;
+	stFault.Active 		:= TRUE ;
+	stFault.Description	:= 'Collision safety fault, check collision detection wiring ';
+	stFault.FaultType		:= E_FaultTypes.FF;
 	GVL_HMI.sCmdEstopText 	:= 'Motor safe torque off fault';
 ELSIF NOT ibEstopOk THEN
 	GVL_HMI.sCmdEstopText 	:= 'Emergency stop pressed';

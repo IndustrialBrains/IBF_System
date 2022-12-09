@@ -17,6 +17,11 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
+					<Name>SystemBase.ibEstopOk</Name>
+					<Comment><![CDATA[ system emergency stop ok]]></Comment>
+					<Type>BOOL</Type>
+				</Var>
+				<Var>
 					<Name>SystemBase.fbAirpressureOk.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
@@ -39,11 +44,6 @@
 				<Var>
 					<Name>SystemBase.fbCmdStopAuto.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.ibEstopOk</Name>
-					<Comment><![CDATA[ system emergency stop ok]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
