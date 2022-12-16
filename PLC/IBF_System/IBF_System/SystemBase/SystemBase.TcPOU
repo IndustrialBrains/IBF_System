@@ -670,7 +670,11 @@ ELSIF iSTOFault THEN
 	stFault.FaultType		:= E_FaultTypes.FF;
 	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Motor safe torque off fault';
 ELSIF NOT ibEstopOk THEN
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop pressed';
+	IF bInitialized THEN
+		IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop pressed';
+	ELSE
+		IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Unable to initialize system';
+	END_IF
 ELSIF NOT ibSystemSafetyOK THEN 
 	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety bumper pressed';
 END_IF
