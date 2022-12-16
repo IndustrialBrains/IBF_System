@@ -87,7 +87,6 @@ VAR
 	bAirOk						: BOOL := FALSE ; // Air pressure is ok 
 	bSystemOK					: BOOL := FALSE ; // all safety and vitals are OK
 	eStateSystem				: E_StateSystem := E_StateSystem.NoReference ; // State of system
-	sStateSystem				: STRING; // String representation of the system state
 	
 	// Set system variables
 	fbSetSystemVariables		: Fb_SystemVariables ;
@@ -358,8 +357,8 @@ END_IF
 		stFault.Active 		:= TRUE ;
 		stFault.Description	:= 'Main air Pressure low ';
 		stFault.FaultType		:= E_FaultTypes.FF;
-		GVL_HMI.bEstopActive 	:= TRUE ;
-		GVL_HMI.sCmdEstopText 	:= 'AIR PRESSURE LOW';
+		IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay := TRUE;
+		IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText := 'AIR PRESSURE LOW';
 	END_IF
 	
 // Main air control 
@@ -568,10 +567,10 @@ AND ibSystemSafetyOK
 AND NOT iSTOFault
 THEN
 	bSafetyOK				S= TRUE ;
-	GVL_HMI.bEstopActive 	:= FALSE ;
+	IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= FALSE ;
 ELSE 
 	bSafetyOK				:= FALSE ;
-	GVL_HMI.bEstopActive 	:= TRUE ;
+	IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= TRUE ;
 	IF eStateSystem > E_StateSystem.Safe 
 	AND eStateSystem <> E_StateSystem.Resetting  THEN 
 		eStateSystem			:= E_StateSystem.Safe ;
@@ -581,7 +580,7 @@ END_IF
 // Set safety state and button light state
 fbCmdResetSafety.bEnable S= TRUE ;
 IF NOT ibEstopOk THEN 
-	GVL_HMI.bEstopActive 	:= TRUE ;
+	IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= TRUE ;
 	fbCmdResetSafety.CmdOn() ;
 ELSIF NOT ibSystemSafetyOK OR iSTOFault THEN 
 	fbCmdResetSafety.CmdBlinkSlow() ;
@@ -617,7 +616,7 @@ qbSTOErrAckn	:= FALSE ;
 qbSafetyErrAckn := FALSE ;
 
 IF iSafetyFBErr THEN 
-	GVL_HMI.sCmdEstopText 	:= 'Safety Program Function block error';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety Program Function block error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE; 
 	END_IF
@@ -625,55 +624,55 @@ IF iSafetyFBErr THEN
 	stFault.Description	:= 'Safety program is in fault state.';
 	stFault.FaultType		:= E_FaultTypes.FF;
 
-	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state.';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program is in fault state.';
 ELSIF iSafetyComErr THEN
-	GVL_HMI.sCmdEstopText 	:= 'Safety program com error';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program com error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stFault.Active 		:= TRUE ;
 	stFault.Description	:= 'Emergency stop fault, check emergency button wiring ';
 	stFault.FaultType		:= E_FaultTypes.FF;
-	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check emergency button wiring ';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop fault, check emergency button wiring ';
 ELSIF iSafetyOutErr THEN
-	GVL_HMI.sCmdEstopText 	:= 'Safety program out error';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program out error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stFault.Active 		:= TRUE ;
 	stFault.Description	:= 'Emergency stop fault, check wiring ';
 	stFault.FaultType		:= E_FaultTypes.FF;
-	GVL_HMI.sCmdEstopText 	:= 'Emergency stop fault, check wiring ';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop fault, check wiring ';
 ELSIF iSafetyOtherErr THEN
-	GVL_HMI.sCmdEstopText 	:= 'Safety program other error';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program other error';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stFault.Active 		:= TRUE ;
 	stFault.Description	:= 'Safety program is in fault state. ';
 	stFault.FaultType		:= E_FaultTypes.FF;
-	GVL_HMI.sCmdEstopText 	:= 'Safety program is in fault state. ';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program is in fault state. ';
 ELSIF iSystemSafetyFault THEN
 // System safety function faults 
-	GVL_HMI.sCmdEstopText 	:= 'Collision detection fault, check sensor wiring';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Collision detection fault, check sensor wiring';
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
 		qbSafetyErrAckn := TRUE ;
 	END_IF
 	stFault.Active 		:= TRUE ;
 	stFault.Description	:= 'Collision safety fault, check collision detection wiring ';
 	stFault.FaultType		:= E_FaultTypes.FF;
-	GVL_HMI.sCmdEstopText 	:= 'System safety fault, check wiring ';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'System safety fault, check wiring ';
 ELSIF iSTOFault THEN
-	GVL_HMI.sCmdEstopText 	:= 'Motor safety fault';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Motor safety fault';
 	qbSTOErrAckn 			:= Sys_Variables.HeartBeat ;
 	stFault.Active 		:= TRUE ;
 	stFault.Description	:= 'Collision safety fault, check collision detection wiring ';
 	stFault.FaultType		:= E_FaultTypes.FF;
-	GVL_HMI.sCmdEstopText 	:= 'Motor safe torque off fault';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Motor safe torque off fault';
 ELSIF NOT ibEstopOk THEN
-	GVL_HMI.sCmdEstopText 	:= 'Emergency stop pressed';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop pressed';
 ELSIF NOT ibSystemSafetyOK THEN 
-	GVL_HMI.sCmdEstopText 	:= 'Safety bumper pressed';
+	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety bumper pressed';
 END_IF
 
 ]]></ST>
@@ -705,13 +704,7 @@ fbSetSystemVariables();
 // State machine 
 CASE eStateSystem OF 
 	E_StateSystem.NoReference:
-		// Reset HMI state
-		IBF_HMI.GVL_HMI.bCmdSemiAuto 	:= FALSE;
-		IBF_HMI.GVL_HMI.bCmdAutomatic	:= FALSE;
-		IBF_HMI.GVL_HMI.bCmdSettings	:= FALSE;
-		IBF_HMI.GVL_HMI.bCmdManual		:= FALSE;
-		IBF_HMI.GVL_HMI.bCmdParameter	:= FALSE;
-		IBF_HMI.GVL_HMI.eShownScreen	:= E_BaseVisu.Idle;
+		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Idle;
 		bHomed			:= FALSE ;
 		bEnabled		:= FALSE ;
 		IF bReferenceOk THEN
@@ -742,7 +735,7 @@ CASE eStateSystem OF
 		END_IF
 	E_StateSystem.Enable:
 		bEnabling 	:= bSystemOK;
-		IF GVL_HMI.bCmdManual THEN
+		IF GVL_HMI.fbHMIControl.bInScreenManual THEN
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bEnabled THEN 
 			fbCmdStartSystem.CmdBlinkFast();
@@ -774,7 +767,7 @@ CASE eStateSystem OF
 		fbCmdStartSystem.CmdBlinkSlow();
 		IF fbCmdResetSafety.bFeStatus OR fbResetSystem.bFeStatus THEN
 			eStateSystem := E_StateSystem.Resetting;			
-		ELSIF GVL_HMI.bCmdManual THEN 
+		ELSIF GVL_HMI.fbHMIControl.bInScreenManual THEN 
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bSystemOK AND fbCmdStartSystem.bFeStatus THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
@@ -786,12 +779,12 @@ CASE eStateSystem OF
 			ExecManual();
 		END_IF
 		
-		IF NOT GVL_HMI.bCmdManual THEN
+		IF NOT GVL_HMI.fbHMIControl.bInScreenManual THEN
 			EStateSystem := E_StateSystem.Enable;
 		END_IF 
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
-		GVL_HMI.bCmdSemiAuto 	:= TRUE;
+		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.SemiAutomatic;
 		IF fbCmdResetSafety.bFeStatus THEN
 			eStateSystem := E_StateSystem.Idle;			
 		ELSIF (fbCmdStartAuto.bFeStatus 
@@ -804,7 +797,7 @@ CASE eStateSystem OF
 		END_IF					
 	E_StateSystem.Automatic:
 		ExecAutomatic();
-		Gvl_HMI.bCmdAutomatic := TRUE;
+		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Automatic;
 		IF fbCmdResetSafety.bFeStatus THEN
 			eStateSystem := E_StateSystem.Safe;
 		ELSIF bAutomatic THEN
@@ -842,7 +835,7 @@ END_CASE
 
 bModuleLocked := FALSE ;
 
-sStateSystem := TO_STRING(eStateSystem);
+IBF_HMI.GVL_HMI.fbHMIControl.sStatusText := TO_STRING(eStateSystem);
 ]]></ST>
       </Implementation>
     </Method>
