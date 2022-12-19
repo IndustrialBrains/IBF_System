@@ -2,22 +2,16 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="SystemBase" Id="{147e2f75-a8ca-43e4-acf3-ce2169ee9c02}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'reflection'}
-PROGRAM SystemBase // system base program, from here all modules are controlled and the system functions are called.
+PROGRAM SystemBase // System base program, from here all modules are controlled and the system functions are called.
 VAR_INPUT // System configuration settings
-	bIcfAirCheckPresent	: BOOL := TRUE; // System is not equiped with air pressure sensor 
+	bIcfAirCheckPresent	: BOOL := TRUE; // System is equipped with air pressure sensor 
 END_VAR
-VAR	// Fault indications
-	bMissingCond		: BOOL := FALSE ; // Module missing condition active
-	bFatalFault			: BOOL := FALSE ; // Module fatal fault is active
-	bCycleFault			: BOOL := FALSE ; // Module cycle fault is active
-
+VAR_OUTPUT
 	// Check values
 	bReferenceOk		: BOOL := FALSE ; // All module references  have been checked
 
 	// State indication
-	bSafeStopping		: BOOL := FALSE ; // Module is stopping by safety
 	bIsSafe				: BOOL := FALSE ; // Module is safe and locked until safety is ok
-	bNoreference		: BOOL := FALSE ; // Module Startup Undefined initialization required
 
 	bInitializing		: BOOL := FALSE ; // Module startup initializing
 	bInitialized		: BOOL := FALSE ; // Module startup initialized waiting for startup command
@@ -51,132 +45,86 @@ VAR	// Fault indications
 	bCmdPause			: BOOL := FALSE ; // Pause all modules 
 	bPaused 			: BOOL := FALSE ; // all modules are paused
 	
-	bPoweringOff		: BOOL := FALSE ; // Module is powering off
-	bPoweredOff			: BOOL := FALSE ; // Module has powered off 	
-
 	bModuleLocked		: BOOL := FALSE ; // a module is locked for commands
-	
-	bAckWarningsBusy	: BOOL := FALSE	; // The acknowledge process is busy
 END_VAR
 VAR
 	// System inputs 
 	ibPowerSupplyOk	 	AT%I*	: BOOL  ; // System Power supply is ok 
-	iSystemSafetyFault	AT%I*	: BOOL	; // System safety Fault
 	fbAirpressureOk 			: Fb_DevDigitalInputFunctions  	; // system airpressure is ok
-	fbCmdResetSafety		 	: FB_DevPushbuttonLight 		; // System reset
-	
-	fTrigPowerSupply			: F_TRIG ; // falling edge trigger for power supply
-	toffMainAir					: TOF	:= (PT := T#500MS ); // Main air supply off delay
-	// System safety valve
+
+	// Air handling
 	fbValveMainAirSupply		: FB_DevValve ; // Main air supply valve 
+	toffMainAir					: TOF	:= (PT := T#500MS ); // Main air supply off delay
+	bAirOk						: BOOL := FALSE ; // Air pressure is ok 
 	
 	// System HMI commands
 	fbStartSemiAuto				: FB_DevHMIButton ; // HMI start semi automatic button 
 	fbStartAuto					: FB_DevHMIButton ; // HMI start automatic button
-	fbResetSystem				: FB_DevHMIButton ; // HMI Reset system
-	fbCmdPowerOff				: FB_DevHMIButton ; // HMI Power off system
-	fbAckWarning				: FB_DevHMIButton ; // HMI Acknowledge warnings
 
-	// system Commands 
+	// System commands 
 	fbCmdStartSystem		 	: FB_DevPushbuttonLight  		; // (re)start system input from button
 	fbCmdStartAuto				: FB_DevPushbuttonLight			; // Start system automatic cycle
 	fbCmdStopAuto				: FB_DevPushbuttonLight			; // Start system automatic cycle
+	fbCmdReset		 			: FB_DevPushbuttonLight 		; // System reset
 	
-	//System state
-	bSafetyOK					: BOOL := FALSE ;
-	bAirOk						: BOOL := FALSE ; // Air pressure is ok 
-	bSystemOK					: BOOL := FALSE ; // all safety and vitals are OK
-	eStateSystem				: E_StateSystem := E_StateSystem.NoReference ; // State of system
+	// System state
+	eStateSystem				: E_StateSystem := E_StateSystem.FirstCycle; // State of system
 	
 	// Set system variables
 	fbSetSystemVariables		: Fb_SystemVariables ;
 	
-	// System Fault handling
-//	fbSystemFaultHandler		: Fb_SystemFaultHandler ;
-//	fbOperatorMessage			: FB_OperatorMessageDisplay ; //Operator message or system state message hadler 
-
-	// Local Fault Handling
-	stFault					: UDT_Fault			; // Message data
+	// Local faults (always fatal)
+	stFault						: UDT_Fault := (FaultType := E_FaultTypes.FF); 
 
  	// Module states
 	nNumberOfModules			: UDINT := 0 ; // Number of modules added to the system 
 	arpModules					: ARRAY [1..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
 
-	// power down system function
+	// Power down system function
+	fTrigPowerSupply			: F_TRIG ; // falling edge trigger for power supply
 	ntShutDown					: NT_Shutdown ; // shutdown system function 
 
 	// Manual controller
 	bDevicesAddedtoManual 		: BOOL := FALSE ; // Add system device (buttons) to manual controller
-	
 
-	// Function path 
-	{attribute 'instance-path'} 
-    {attribute 'noinit'}
-	sPath			: STRING	; // Path name of function (used for manual reference
 END_VAR
 VAR // safety 
 	// inputs 
-	ibEstopOk 			AT%I*	: BOOL  ; // system emergency stop ok
-	ibSystemSafetyOK	AT%I*	: BOOL  ; // System is safe 
-	iSafetyFBErr		AT%I*	: BOOL	; // The "FB Error" group signal
-	iSafetyComErr		AT%I*	: BOOL	; // The "Com Error" group signal
-	iSafetyOtherErr		AT%I*	: BOOL	; // The "Other Err" group signal
-	iSafetyOutErr		AT%I*	: BOOL	; // The "Out Err" group signal
-	iSTOFault			AT%I* 	: BOOL	; // Motor safe torque off fault active
+	ibEstopOk 			AT%I*	: BOOL  ; // System emergency stop ok
+	ibSafetyFBErr		AT%I*	: BOOL	; // The "FB Error" group signal
+	ibSafetyComErr		AT%I*	: BOOL	; // The "Com Error" group signal
 	
 	// Outputs 
 	qbSafetyErrAckn		AT%Q*	: BOOL ; // Safety error acknowledge
 	qbRunSafety			AT%Q*	: BOOL ; // Run safety program
-	qbResetSafety		AT%Q*	: BOOL ; // reset safety program
-	qbSTOErrAckn		AT%Q*	: BOOL ; // Safet torque off error acnowledge
+	qbResetSafety		AT%Q*	: BOOL ; // Reset safety program
 
 	// safety Reset Timer	
 	TofSafetyErrAck				: TOF := (PT := T#500MS); // Safety reset timer
-	TOfSTOErrAck				: TOF := (PT := T#500MS); // Safe torque off rest timer
 END_VAR
 VAR // Miscellaneous
-	bFirstCycle : BOOL := TRUE; // Is this the first time the PRG is called?
-	bPersistentDataFail	: BOOL := TRUE ;
-END_VAR
-VAR PERSISTENT // Persistent data check
-	bPersistentFlag	: BOOL := FALSE ; // Persistent dat in tack flag
+	stIdentity 		: UDT_Identity := (sName := 'System');
+	bCmdResetBusy 	: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Exec safety control
-ExecSafetyControl();
-
-// Call faulthandler
-//fbSystemFaultHandler( 	nNumberOfModules	:= nNumberOfModules,
-//						arpModules			:= arpModules,
-//						bsystemInitialized	:= bInitialized,
-//						bSystemFF			=> bFatalFault,
-//						bSystemCF			=> bCycleFault,
-//						bSystemMC			=> bMissingCond);
-
-// Check if this is the first cycle the PRG is called
-// if not, return. This is to make sure all modules are connected. 
-IF bFirstCycle THEN
-	bFirstCycle := FALSE;
-	RETURN;
-END_IF
-
-// check system functions
-IF bInitialized THEN 
-	CheckSystemOK();
-	CheckSystemCommands();
-END_IF 
-
-// Run system
-ExecSystemRun();
-
-// call device functions 
+      <ST><![CDATA[// Call system functions 
 CallSystemFunctions();
 
-// Call operator warning acknowledgement
-ExecAckWarnings();
+// Execute fault handing
+ExecFaultHandling();
+
+// Handle UPS
+ExecUPS();
+
+// Execute safety control (controls E-Stop safety modules and enables air supply)
+ExecSafetyControl();
 
 // Call modules 
-CallModules();]]></ST>
+CallModules();
+
+// Execute state machine
+ExecSystemRun();
+]]></ST>
     </Implementation>
     <Folder Name="ModuleFunctions" Id="{fb1414af-f6e5-4202-8989-256aa0d1eacc}" />
     <Folder Name="SystemFunction" Id="{05994c64-d0aa-4e7d-8ae3-f139ae256daf}" />
@@ -187,7 +135,6 @@ VAR
 END_VAR
 VAR
 	AllAutomatic : BOOL ;
-	
 	Stopping : BOOL;
 	bAllStopped : BOOL;
 END_VAR]]></Declaration>
@@ -204,7 +151,6 @@ bAutomatic		:= FALSE; // Reverse feedback
 AllAutomatic 	:= TRUE ;
 bStoppingAuto	:= TRUE ;
 bEnabled		S= bEnabling ;
-bPoweredOff		:= TRUE;
 bHomed 			:= TRUE;
 bPaused 		:= TRUE;
 bAllStopped     := TRUE;
@@ -214,31 +160,27 @@ FOR i := 1 TO nNumberOfModules DO
 	// set system commands
 	arpModules[i].pFunction^.bEnable			:= bEnabled			;
 	arpModules[i].pFunction^.bCmdReset			:= bResetting		;
-	arpModules[i].pFunction^.bSafetyOK			:= NOT bSafeStopping;
 	arpModules[i].pFunction^.bCmdPause			:= bCmdPause		; 
 	// Read state indications 
-	bReferenceOk 	:= arpModules[i].pFunction^.bReferenceOk 	AND bReferenceOk; 
-	bIsSafe 		:= arpModules[i].pFunction^.bIsSafe 		AND bIsSafe		;
-	bEnabled 		:= arpModules[i].pFunction^.bEnable 		AND bEnabled	;
-	bHeld			:= arpModules[i].pFunction^.bHeld 			AND bHeld		;
-	bResetDone		:= arpModules[i].pFunction^.bResetDone 		AND bResetDone	;
-	bManual			:= arpModules[i].pFunction^.bManual 		AND bManual		;
-	bSemiAuto		:= arpModules[i].pFunction^.bSemiAuto 		AND bSemiAuto	;
-	bPoweredOff 	:= arpModules[i].pFunction^.bPoweredOff 	AND bPoweredOff	;
-	bHomed			:= arpModules[i].pFunction^.bHomed			AND bHomed 		;
-	bPaused			:= arpModules[i].pFunction^.bPaused			AND bPaused		;
-	bModuleLocked	S= arpModules[i].pFunction^.bLocked							; // Module is locked for commnds
-	bCmdPause 		R= arpModules[i].pFunction^.bReqContinue					; // Request continue from module
-	bCmdPause		S= arpModules[i].pFunction^.bReqPause						; // Request for pause from module
-	bAutomatic		S= arpModules[i].pFunction^.bAutomatic 						; // Stay in automatic even when one module is in automatic
-	AllAutomatic	:= arpModules[i].pFunction^.bAutomatic 		AND AllAutomatic; // reset start automatic when al modules are in automatic operation
-	bStoppingAuto	:= arpModules[i].pFunction^.bStopping 		AND bStoppingAuto; // reset start automatic when al modules are in automatic operation
+	bReferenceOk 	R= NOT arpModules[i].pFunction^.bReferenceOk; 
+	bIsSafe 		R= NOT arpModules[i].pFunction^.bIsSafe;
+	bEnabled 		R= NOT arpModules[i].pFunction^.bEnable;
+	bHeld			R= NOT arpModules[i].pFunction^.bHeld;
+	bResetDone		R= NOT arpModules[i].pFunction^.bResetDone;
+	bManual			R= NOT arpModules[i].pFunction^.bManual;
+	bSemiAuto		R= NOT arpModules[i].pFunction^.bSemiAuto;
+	bHomed			R= NOT arpModules[i].pFunction^.bHomed;
+	bPaused			R= NOT arpModules[i].pFunction^.bPaused;
+	bModuleLocked	S= arpModules[i].pFunction^.bLocked			; // Module is locked for commands
+	bCmdPause 		R= arpModules[i].pFunction^.bReqContinue	; // Request continue from module
+	bCmdPause		S= arpModules[i].pFunction^.bReqPause		; // Request for pause from module
+	bAutomatic		S= arpModules[i].pFunction^.bAutomatic 		; // Stay in automatic even when one module is in automatic
+	AllAutomatic	R= NOT arpModules[i].pFunction^.bAutomatic	; // reset start automatic when al modules are in automatic operation
+	bStoppingAuto	R= NOT arpModules[i].pFunction^.bStopping;
 
 	Stopping		:= arpModules[i].pFunction^.bStopping;
 	
 	bAllStopped     := NOT Stopping AND NOT bAutomatic AND bAllStopped;
-
-	
 END_FOR
 
 // Reset start inputs
@@ -246,7 +188,6 @@ END_FOR
 	bHolding		R= bHeld 		;
 	bResetting		R= bResetDone 	;
 	bStartSemiAuto	R= bSemiAuto	;
-	bPoweringOff	R= bPoweredOff 	;
 	bHoming			R= bHomed 		;
 	bStartAuto		R= AllAutomatic	; 
 	bStopAuto		R= bAllStopped	;
@@ -260,30 +201,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// call parameter handler
-GVL_Parameters.fbParameterHandler();
-IBF_Devices.GVL_DevManual.fbManualControler();
-
-// Execute button functions 
-fbStartAuto		( 	tDelay			:= T#100MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-fbStartSemiAuto ( 	tDelay			:= T#100MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
-fbResetSystem 	( 	tDelay			:= T#5000MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
-//fbAckWarning	(	Istatus			:= GVL_Message.bAckWarnings,
-//					tDelay			:= T#100MS,
-//					refFbManualCtrl := IBF_Devices.GVL_DevManual.fbManualControler,
-//					refFbFault 		:= fbFaultHandler );
-
-fbCmdStartSystem(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-fbCmdStartAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-fbCmdStopAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-
-// execute input functions
-fbValveMainAirSupply(	bEnable			:= TRUE,
-						bSafetyOk		:= ibEstopOk,
-						refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+        <ST><![CDATA[// Update system variables 
+fbSetSystemVariables();
 
 // Add device functions to manual controller 
 IF NOT bDevicesAddedtoManual THEN
@@ -293,41 +212,15 @@ IF NOT bDevicesAddedtoManual THEN
 	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartSystem	);
 	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartAuto		);
 	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStopAuto		);
-	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdResetSafety	);
+	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdReset	);
 	bDevicesAddedtoManual S= TRUE ;
 END_IF
 
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CheckSystemCommands" Id="{7c2b1772-f51e-4aa3-a97a-1e93dcc6a18d}" FolderPath="SystemFunction\">
-      <Declaration><![CDATA[METHOD INTERNAL CheckSystemCommands : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// ===== full reset ======
-	IF fbCmdResetSafety.bFcoDelay THEN 
-		eStateSystem 	:= E_StateSystem.NoReference ;
-	END_IF
+// Call global handlers (except for faulthandler)
+IBF_Devices.GVL_DevManual.fbManualControler();
+GVL_Parameters.fbParameterHandler();
 
-// ====== power off ======
-	IF fbCmdPowerOff.bFcoDelay THEN 
-		eStateSystem := E_StateSystem.PowerOff ;
-	END_IF
-		
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CheckSystemOK" Id="{b3d7881d-8420-47b1-9d4b-1c3829d8822d}" FolderPath="SystemFunction\">
-      <Declaration><![CDATA[METHOD PRIVATE CheckSystemOK : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// shutdown emediately if power is down 
-fTrigPowerSupply(CLK := ibPowerSupplyOk);
-ntShutDown(START := GVL_Main.cbUPSPRESENT AND (bPoweredOff OR fTrigPowerSupply.Q)); 
-
-// ===== Check Air pressure =====
+// Check air pressure
 IF bIcfAirCheckPresent THEN
 	fbAirpressureOk(refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
 	bAirOk := fbAirpressureOk.bFcoDelay ;
@@ -335,37 +228,35 @@ ELSE
 	bAirOk := TRUE ;
 END_IF
 
+// Execute button functions 
+fbStartAuto		( 	tDelay			:= T#100MS,
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+fbStartSemiAuto ( 	tDelay			:= T#100MS,
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
+fbCmdReset 		( 	tDelay			:= T#5000MS,
+					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
+fbCmdStartSystem(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+fbCmdStartAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+fbCmdStopAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
 
-// ===== Check if system is ok =====
-	bSystemOK := TRUE ;
-	bSystemOK := bAirOk 	AND bSystemOK ;
-	bSystemOK := bSafetyOK	AND bSystemOK ;	
-				
-	IF NOT bSystemOK 
-	AND eStateSystem > E_StateSystem.Safe 
-	AND eStateSystem <> E_StateSystem.Resetting 
-	THEN
-		eStateSystem := E_StateSystem.Safe; 
-	ELSIF (bFatalFault OR bCycleFault) 
-	AND eStateSystem <> E_StateSystem.Resetting 
-	THEN 
-		eStateSystem := E_StateSystem.Fault ;
+// Reset button (lamp)
+IF (GVL_Utilities.fbFaultHandler.nActiveFaults > 0) THEN
+	IF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.FF] THEN
+		// Fatal fault
+		fbCmdReset.CmdOn() ;
+	ELSIF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] THEN
+		// Cycle fault
+		fbCmdReset.CmdBlinkSlow() ;
+	ELSIF NOT GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.OM] THEN
+		// Warning
+		fbCmdReset.CmdBlinkFast() ;
 	END_IF
-
-// ===== System messages ======
-	IF NOT bAirOk THEN
-		stFault.Active 		:= TRUE ;
-		stFault.Description	:= 'Main air Pressure low ';
-		stFault.FaultType		:= E_FaultTypes.FF;
-		IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay := TRUE;
-		IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText := 'AIR PRESSURE LOW';
-	END_IF
-	
-// Main air control 
-toffMainAir(IN := bSystemOK);
-IF toffMainAir.Q THEN
-	fbValveMainAirSupply.CmdOpen();
 END_IF
+
+// execute input functions
+fbValveMainAirSupply(	bEnable			:= TRUE,
+						refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+
 ]]></ST>
       </Implementation>
     </Method>
@@ -412,23 +303,6 @@ END_VAR
 CmdReset := TRUE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="ExecAckWarnings" Id="{86c6f5a0-b6fe-4448-9452-f04a9ea3021f}" FolderPath="ModuleFunctions\">
-      <Declaration><![CDATA[METHOD ExecAckWarnings : BOOL
-VAR
-	i : UDINT ;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[//If required, run the acknowledge process 
-IF (fbAckWarning.bFeStatus OR NOT bAckWarningsBusy) THEN
-	bAckWarningsBusy := TRUE;
-	
-	FOR i := 1 TO nNumberOfModules DO 
-		bAckWarningsBusy := arpModules[i].pFunction^.CmdAckOW() AND bAckWarningsBusy;
-	END_FOR
-END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="ExecAutomatic" Id="{3c758811-81f1-42d1-83e5-646cc80a7b4f}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PRIVATE ExecAutomatic : BOOL
 VAR_INPUT
@@ -449,6 +323,24 @@ ELSIF bStartAuto THEN
 END_IF
 	
 ExecAutomatic := NOT bStartAuto;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecFaultHandling" Id="{4f8ea78e-6627-05b4-0046-c75f4d368b89}" FolderPath="SystemFunction\">
+      <Declaration><![CDATA[METHOD PRIVATE ExecFaultHandling
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Register system faults
+GVL_Utilities.fbFaultHandler.CmdAddFault(stFault := stFault, stIdentity);
+
+// Call global fault handler
+GVL_Utilities.fbFaultHandler();
+
+// Reset command
+bCmdResetBusy S= fbCmdReset.bFeStatus;
+IF bCmdResetBusy THEN
+	bCmdResetBusy R= GVL_Utilities.fbFaultHandler.CmdReset();
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHoming" Id="{345df0e0-469c-4aba-9303-ad14c7d3f6d3}" FolderPath="ModuleFunctions\">
@@ -477,28 +369,11 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[bEnabled := FALSE ;
-// Run automatic function in 
 FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdManual() ;
 END_FOR
 
 ExecManual := bManual;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="ExecPowerOff" Id="{b17ea916-e40f-4a32-a9b5-a5ade237754d}" FolderPath="ModuleFunctions\">
-      <Declaration><![CDATA[METHOD PRIVATE ExecPowerOff : BOOL
-VAR_INPUT
-END_VAR
-VAR 
-	i : UDINT ;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// Power off all modules
-FOR i := 1 TO nNumberOfModules DO 
-	arpModules[i].pFunction^.CmdPowerOff () ;
-END_FOR
- 
-ExecPowerOff := bPoweredOff ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSafeHold" Id="{09e80f99-469c-4643-bf23-6284454a47bf}" FolderPath="ModuleFunctions\">
@@ -549,6 +424,7 @@ IF bInitialized AND bReferenceOk THEN
 	END_FOR
 END_IF
 
+// Shut down air supply once all modules are safe
 IF bIsSafe THEN 
 	fbValveMainAirSupply.CmdSafeStop();
 END_IF
@@ -557,128 +433,67 @@ ExecSafeStop := bIsSafe ;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSafetyControl" Id="{8ec10b67-53de-4590-9578-2159b6a13b3f}" FolderPath="SystemFunction\">
-      <Declaration><![CDATA[METHOD PRIVATE ExecSafetyControl : BOOL
-VAR_INPUT
-END_VAR
+      <Declaration><![CDATA[METHOD PRIVATE ExecSafetyControl: BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF ibEstopOk 
-AND ibSystemSafetyOK
-AND NOT iSTOFault
-THEN
-	bSafetyOK				S= TRUE ;
-	IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= FALSE ;
-ELSE 
-	bSafetyOK				:= FALSE ;
-	IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= TRUE ;
-	IF eStateSystem > E_StateSystem.Safe 
-	AND eStateSystem <> E_StateSystem.Resetting  THEN 
-		eStateSystem			:= E_StateSystem.Safe ;
+        <ST><![CDATA[// Trigger system faults
+// NOTES: some faults trigger a automatic safety circuit reset
+
+// Not safe, until proven otherwise
+stFault.Active := TRUE ;
+
+IF ibSafetyFBErr THEN 
+	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
+		qbSafetyErrAckn := TRUE; 
 	END_IF
+	stFault.Description	:= 'Safety module function block error';
+
+ELSIF ibSafetyComErr THEN
+	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
+		qbSafetyErrAckn := TRUE ;
+	END_IF
+	stFault.Description	:= 'Safety module communication fault';
+
+ELSIF NOT ibEstopOk THEN
+	IF bInitialized THEN
+		stFault.Description	:= 'Emergency stop pressed';
+	ELSE
+		// TODO: move to more logical place (state machine?)
+		stFault.Description	:= 'Unable to initialize system';
+	END_IF
+
+ELSIF NOT bAirOk THEN
+	stFault.Description	:= 'Main air pressure low';
+	
+ELSE // Everything OK!
+	stFault.Active := FALSE;
 END_IF
 
-// Set safety state and button light state
-fbCmdResetSafety.bEnable S= TRUE ;
-IF NOT ibEstopOk THEN 
-	IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= TRUE ;
-	fbCmdResetSafety.CmdOn() ;
-ELSIF NOT ibSystemSafetyOK OR iSTOFault THEN 
-	fbCmdResetSafety.CmdBlinkSlow() ;
-ELSIF NOT bAirOk OR NOT bSystemOK THEN
-	fbCmdResetSafety.CmdBlinkFast() ;
-END_IF
-
-
-
-// Safety reset button function
-fbCmdResetSafety(	tDelay			:= T#30S ,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
-
-// Link safety reset
-qbResetSafety := fbCmdResetSafety.bFeStatus AND NOT bSafetyOK ;
+// Show emergency overlay (a modal HMI overlay which blocks all HMI functionality)
+// when a fault is active
+IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText := stFault.Description;
+IBF_HMI.GVL_HMI.fbHMIControl.bShowEmergencyOverlay	:= stFault.Active;
 
 // Set safety system in run mode
-IF NOT iSafetyFBErr 
-AND NOT iSafetyComErr
-AND NOT iSafetyOtherErr
-AND NOT iSafetyOutErr
-AND NOT iSystemSafetyFault 
-AND bInitialized THEN 
+IF NOT ibSafetyFBErr 
+	AND NOT ibSafetyComErr
+	AND bInitialized 
+THEN 
 	qbRunSafety := TRUE ;
 ELSE 
 	qbRunSafety := FALSE;
 END_IF
 
-// reset safety faults
-TofSafetyErrAck	(IN := qbSafetyErrAckn	);
-TOfSTOErrAck	(IN := qbSTOErrAckn 	);
-qbSTOErrAckn	:= FALSE ;
+// Reset safety faults
+TofSafetyErrAck(IN := qbSafetyErrAckn);
 qbSafetyErrAckn := FALSE ;
+qbResetSafety := fbCmdReset.bFeStatus;
 
-IF iSafetyFBErr THEN 
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety Program Function block error';
-	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE; 
-	END_IF
-	stFault.Active := TRUE ;
-	stFault.Description	:= 'Safety program is in fault state.';
-	stFault.FaultType		:= E_FaultTypes.FF;
-
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program is in fault state.';
-ELSIF iSafetyComErr THEN
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program com error';
-	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE ;
-	END_IF
-	stFault.Active 		:= TRUE ;
-	stFault.Description	:= 'Emergency stop fault, check emergency button wiring ';
-	stFault.FaultType		:= E_FaultTypes.FF;
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop fault, check emergency button wiring ';
-ELSIF iSafetyOutErr THEN
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program out error';
-	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE ;
-	END_IF
-	stFault.Active 		:= TRUE ;
-	stFault.Description	:= 'Emergency stop fault, check wiring ';
-	stFault.FaultType		:= E_FaultTypes.FF;
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop fault, check wiring ';
-ELSIF iSafetyOtherErr THEN
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program other error';
-	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE ;
-	END_IF
-	stFault.Active 		:= TRUE ;
-	stFault.Description	:= 'Safety program is in fault state. ';
-	stFault.FaultType		:= E_FaultTypes.FF;
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety program is in fault state. ';
-ELSIF iSystemSafetyFault THEN
-// System safety function faults 
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Collision detection fault, check sensor wiring';
-	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
-		qbSafetyErrAckn := TRUE ;
-	END_IF
-	stFault.Active 		:= TRUE ;
-	stFault.Description	:= 'Collision safety fault, check collision detection wiring ';
-	stFault.FaultType		:= E_FaultTypes.FF;
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'System safety fault, check wiring ';
-ELSIF iSTOFault THEN
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Motor safety fault';
-	qbSTOErrAckn 			:= Sys_Variables.HeartBeat ;
-	stFault.Active 		:= TRUE ;
-	stFault.Description	:= 'Collision safety fault, check collision detection wiring ';
-	stFault.FaultType		:= E_FaultTypes.FF;
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Motor safe torque off fault';
-ELSIF NOT ibEstopOk THEN
-	IF bInitialized THEN
-		IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Emergency stop pressed';
-	ELSE
-		IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Unable to initialize system';
-	END_IF
-ELSIF NOT ibSystemSafetyOK THEN 
-	IBF_HMI.GVL_HMI.fbHMIControl.sEmergencyText 	:= 'Safety bumper pressed';
+// Air pressure
+toffMainAir(IN := ibEstopOk);
+IF toffMainAir.Q THEN
+	fbValveMainAirSupply.CmdOpen();
 END_IF
-
 ]]></ST>
       </Implementation>
     </Method>
@@ -697,87 +512,106 @@ ExecSemiAuto := bSemiAuto;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecSystemRun" Id="{504c7dee-e26b-448e-99d5-004a6dc8da1e}" FolderPath="SystemFunction\">
-      <Declaration><![CDATA[METHOD INTERNAL ExecSystemRun : BOOL
-VAR_INPUT
+      <Declaration><![CDATA[METHOD INTERNAL ExecSystemRun
+VAR
+	bError : BOOL; // An error is active (fatal fault or cycle fault)
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// set system variables 
-fbSetSystemVariables();
+        <ST><![CDATA[// Check if there are any high-prio faults
+bError := GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] OR GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.FF];
 
 // State machine 
 CASE eStateSystem OF 
-	E_StateSystem.NoReference:
-		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Idle;
-		bHomed			:= FALSE ;
-		bEnabled		:= FALSE ;
+	E_StateSystem.FirstCycle:
+		eStateSystem 	:= E_StateSystem.CheckReferences;
+
+	E_StateSystem.CheckReferences:
 		IF bReferenceOk THEN
 			eStateSystem 	:= E_StateSystem.Initialize ;
 		END_IF
+
 	E_StateSystem.Initialize:
 		IF Init() THEN
 			eStateSystem := E_StateSystem.LoadParameters;
 		END_IF
+
 	E_StateSystem.LoadParameters:
-		bParametersLoaded := GVL_Parameters.fbParameterHandler.Init(); 
+		bParametersLoaded := GVL_Parameters.fbParameterHandler.Init();
 		IF bParametersLoaded OR GVL_Parameters.fbParameterHandler.bFault THEN
+			// TODO: trigger fault when fbparameterhandler is unable to read parameters
 			eStateSystem := E_StateSystem.Safe ;
 		END_IF
+
 	E_StateSystem.Safe:
-		bSafeStopping := NOT bIsSafe;
-		IF bIsSafe 
-		AND bSystemOK THEN 
-			IF bFatalFault OR bCycleFault THEN
+		IF bIsSafe AND ibEstopOk THEN 
+			IF bError THEN
 				eStateSystem := E_StateSystem.Fault ;
 			ELSE
 				eStateSystem := E_StateSystem.Enable;
 			END_IF
-		ELSIF fbResetSystem.bFeStatus THEN
+		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem	:= E_StateSystem.Resetting;
 		ELSE 
 			ExecSafeStop();
 		END_IF
+
 	E_StateSystem.Enable:
-		bEnabling 	:= bSystemOK;
-		IF GVL_HMI.fbHMIControl.bInScreenManual THEN
+		bEnabling := TRUE;
+		IF bError THEN
+			eStateSystem := E_StateSystem.Fault;
+		ELSIF GVL_HMI.fbHMIControl.bInScreenManual THEN
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF bEnabled THEN 
 			fbCmdStartSystem.CmdBlinkFast();
-			IF fbCmdResetSafety.bFeStatus THEN
+			IF fbCmdReset.bFeStatus THEN
 				eStateSystem := E_StateSystem.Resetting ;
 			ELSIF fbCmdStartSystem.bFeStatus THEN
 				eStateSystem := E_StateSystem.Home ;
 			END_IF
 		END_IF
+
 	E_StateSystem.Home:	
-		IF fbCmdResetSafety.bFeStatus THEN
+		IF bError THEN
+			eStateSystem := E_StateSystem.Fault;
+		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem := E_StateSystem.Safe;			
 		ELSIF ExecHoming() THEN
 			eStateSystem := E_StateSystem.Idle;
 		END_IF
+
 	E_StateSystem.Resetting:
 		IF NOT bResetDone THEN 
 			bResetting S= TRUE ;
-		ELSIF NOT bSafetyOK THEN 
+		ELSIF NOT bIsSafe THEN 
 			eStateSystem := E_StateSystem.Safe ;
-		ELSIF bFatalFault OR bCycleFault THEN
-			eStateSystem := E_StateSystem.Fault ;
+		ELSIF bError THEN
+			IF NOT bCmdResetBusy THEN
+				eStateSystem := E_StateSystem.Fault ;
+			END_IF
 		ELSIF bHomed THEN
 			eStateSystem := E_StateSystem.Idle ;
 		ELSE 
 			eStateSystem := E_StateSystem.Enable ;
 		END_IF
+
 	E_StateSystem.Idle:
+		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Idle;
 		fbCmdStartSystem.CmdBlinkSlow();
-		IF fbCmdResetSafety.bFeStatus OR fbResetSystem.bFeStatus THEN
+		IF bError THEN
+			eStateSystem := E_StateSystem.Fault;
+		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem := E_StateSystem.Resetting;			
 		ELSIF GVL_HMI.fbHMIControl.bInScreenManual THEN 
 			eStateSystem := E_StateSystem.Manual ;
-		ELSIF bSystemOK AND fbCmdStartSystem.bFeStatus THEN 
+		ELSIF fbCmdStartSystem.bFeStatus THEN 
 			eStateSystem := E_StateSystem.SemiAuto ;
 		END_IF
+
 	E_StateSystem.Manual:
-		IF fbCmdResetSafety.bFeStatus THEN
+		IF bError THEN
+			eStateSystem := E_StateSystem.Fault;
+		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem := E_StateSystem.Safe;			
 		ELSIF IBF_Devices.GVL_DevManual.bManualModeActive THEN
 			ExecManual();
@@ -786,30 +620,36 @@ CASE eStateSystem OF
 		IF NOT GVL_HMI.fbHMIControl.bInScreenManual THEN
 			EStateSystem := E_StateSystem.Enable;
 		END_IF 
+
 	E_StateSystem.SemiAuto:
 		ExecSemiAuto();
 		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.SemiAutomatic;
-		IF fbCmdResetSafety.bFeStatus THEN
+		IF bError THEN
+			eStateSystem := E_StateSystem.Fault;
+		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem := E_StateSystem.Idle;			
 		ELSIF (fbCmdStartAuto.bFeStatus 
-		OR fbStartAuto.bFcoDelay 
-		OR bAutomatic)
+			OR fbStartAuto.bFcoDelay 
+			OR bAutomatic)
 		AND NOT bModuleLocked THEN 
 			bStartAuto 		:= TRUE ;
 			bStopAuto 		:= FALSE;
 			eStateSystem 	:= E_StateSystem.Automatic ;
 		END_IF					
+
 	E_StateSystem.Automatic:
 		ExecAutomatic();
 		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Automatic;
-		IF fbCmdResetSafety.bFeStatus THEN
+		IF bError THEN
+			eStateSystem := E_StateSystem.Fault;
+		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem := E_StateSystem.Safe;
 		ELSIF bAutomatic THEN
 			IF fbCmdStartSystem.bFeStatus THEN
 				eStateSystem := E_StateSystem.Idle ;
 			ELSIF fbCmdStopAuto.bFeStatus THEN
 				bStopAuto := TRUE;
-			ELSIF fbCmdStartAuto.bFeStatus OR bMissingCond THEN  
+			ELSIF fbCmdStartAuto.bFeStatus OR GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.MC] THEN  
 				bCmdPause 	:= NOT bPaused ;
 			END_IF
 		ELSIF NOT bStartAuto AND NOT bStopAuto THEN 
@@ -822,17 +662,20 @@ CASE eStateSystem OF
 		ELSE
 			fbCmdStartAuto.CmdBlinkFast(); 				
 		END_IF
+
 	E_StateSystem.Fault:
-		IF fbResetSystem.bFeStatus OR fbCmdResetSafety.bFeStatus THEN
+		// Reset enable bits
+		bEnabled := FALSE;
+		bEnabling := FALSE;
+	
+		IF fbCmdReset.bFeStatus THEN
 			bResetDone		:= FALSE ;
 			eStateSystem 	:= E_StateSystem.Resetting ;
-		ELSIF bFatalFault THEN 
+		ELSIF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.FF] THEN 
 			ExecSafeStop();
-		ELSIF bCycleFault THEN 
+		ELSIF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] THEN 
 			ExecSafeHold();	
 		END_IF 
-	E_StateSystem.PowerOff:
-		ExecPowerOff();
 	ELSE 
 		;		
 END_CASE
@@ -843,6 +686,14 @@ IBF_HMI.GVL_HMI.fbHMIControl.sStatusText := TO_STRING(eStateSystem);
 ]]></ST>
       </Implementation>
     </Method>
+    <Action Name="ExecUPS" Id="{f4fba995-87b8-0e1b-28ca-61a8e008cf02}" FolderPath="SystemFunction\">
+      <Implementation>
+        <ST><![CDATA[// If the system has an UPS, shutdown immediately if power goes down 
+fTrigPowerSupply(CLK := ibPowerSupplyOk);
+ntShutDown(START := GVL_Main.cbUPSPRESENT AND fTrigPowerSupply.Q); 
+]]></ST>
+      </Implementation>
+    </Action>
     <Method Name="Init" Id="{77ed26c7-8922-4741-8b27-ccc11849164f}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PRIVATE Init : BOOL
 VAR_INPUT
@@ -858,7 +709,7 @@ IF bIcfAirCheckPresent THEN
 								nParentId	:= 0 );
 END_IF 
 
-fbCmdResetSafety.Init	(	nId 		:= 2,
+fbCmdReset.Init	(	nId 		:= 2,
 							nParentId	:= 0 );
 
 fbValveMainAirSupply.Init(	nId			:= 3,
@@ -881,7 +732,7 @@ FOR i := 1 TO nNumberOfModules DO
 	IF NOT arpModules[i].pFunction^.bInitialized THEN 
 		arpModules[i].pFunction^.CmdInit();
 	END_IF
-	bInitialized 	:= bInitialized AND arpModules[i].pFunction^.bInitialized;
+	bInitialized R= NOT arpModules[i].pFunction^.bInitialized;
  END_FOR
  
 bInitializing 	:= NOT bInitialized ;

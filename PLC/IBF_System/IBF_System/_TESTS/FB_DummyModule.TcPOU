@@ -3,15 +3,22 @@
   <POU Name="FB_DummyModule" Id="{dcc4cad9-3fe5-4429-9581-93b560acb380}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK INTERNAL FB_DummyModule EXTENDS Fb_ModuleBase
 VAR_INPUT
-END_VAR
-VAR_OUTPUT
-END_VAR
-VAR
+	// Inputs for testing module <> system interaction
+	bAllowInit 		: BOOL;
+	bAllowAutomatic : BOOL;
+	bAllowSemiAuto 	: BOOL;
+	bAllowHold 		: BOOL;
+	bAllowHome 		: BOOL;
+	bAllowReset 	: BOOL;
+	bAllowIsSafe 	: BOOL;
+	bAllowManual 	: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[SUPER^();
-]]></ST>
+
+{warning: 'Code smell: bManual does not follow the same pattern as the other commands'}		
+bManual := bAllowManual;]]></ST>
     </Implementation>
     <Method Name="CallComponents" Id="{d2169844-dc1c-4e3e-913f-09fb324d2664}">
       <Declaration><![CDATA[METHOD PROTECTED  CallComponents : BOOL
@@ -37,7 +44,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bAutomatic := TRUE;
+        <ST><![CDATA[bAutomatic := bAllowAutomatic;
 ExecAutomatic := bAutomatic;
 ]]></ST>
       </Implementation>
@@ -48,7 +55,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bHeld := TRUE;
+        <ST><![CDATA[bHeld := bAllowHold;
 ExecHold := bHeld;]]></ST>
       </Implementation>
     </Method>
@@ -58,8 +65,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bHomed := TRUE;
-ExecHome:= bHomed;]]></ST>
+        <ST><![CDATA[bHomed := bAllowHome;
+ExecHome := bHomed;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecInit" Id="{02ca3dd5-4e2d-4a98-bf2f-6e10b13580f5}">
@@ -68,18 +75,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bInitialized := TRUE;
+        <ST><![CDATA[bInitialized := bAllowInit;
 ExecInit := bInitialized;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="ExecPowerOff" Id="{3728e047-591f-426b-9524-5995336bc980}">
-      <Declaration><![CDATA[METHOD PROTECTED  ExecPowerOff : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[bPoweredOff := TRUE;
-ExecPowerOff := bPoweredOff;]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecReset" Id="{0c5dc2f5-3abd-4b9c-9ed5-e997d45d1f61}">
@@ -88,7 +85,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bResetDone := TRUE;
+        <ST><![CDATA[bResetDone := bAllowReset;
 ExecReset := bResetDone;]]></ST>
       </Implementation>
     </Method>
@@ -98,7 +95,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bIsSafe := TRUE;
+        <ST><![CDATA[bIsSafe := bAllowIsSafe;
 ExecSafeStop := bIsSafe;]]></ST>
       </Implementation>
     </Method>
@@ -108,7 +105,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bSemiAuto := TRUE;
+        <ST><![CDATA[bSemiAuto := bAllowSemiAuto;
 ExecSemiAuto := bSemiAuto;]]></ST>
       </Implementation>
     </Method>

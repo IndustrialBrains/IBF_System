@@ -6,7 +6,8 @@
 {attribute 'to_string'}
 TYPE E_StateSystem :
 (
-	NoReference		, 	// system has not been initialized
+	FirstCycle		,
+	CheckReferences ,  	// System is checking if module references are OK
 	Initialize		, 	// System is initializing
 	LoadParameters	, 	// System is loading parameters from/to file
 	Safe			, 	// System is in safety state
@@ -17,9 +18,8 @@ TYPE E_StateSystem :
 	Manual			, 	// System is in manual mode
 	SemiAuto		, 	// System is in semi auto mode
 	Automatic		, 	// system is in automatic mode 
-	Fault			,	// System is in Fault state
-	PowerOff		// system is powering off
-)INT;
+	Fault				// System is in Fault state
+);
 END_TYPE
 ]]></Declaration>
     <XmlArchive>
@@ -27,7 +27,12 @@ END_TYPE
         <o xml:space="preserve" t="TextListEnumerationTextListObject">
           <l n="TextList" t="ArrayList" cet="TextListRow">
             <o>
-              <v n="TextID">"NoReference"</v>
+              <v n="TextID">"FirstCycle"</v>
+              <v n="TextDefault">""</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"CheckReferences"</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
@@ -83,11 +88,6 @@ END_TYPE
             </o>
             <o>
               <v n="TextID">"Fault"</v>
-              <v n="TextDefault">""</v>
-              <l n="LanguageTexts" t="ArrayList" />
-            </o>
-            <o>
-              <v n="TextID">"PowerOff"</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>

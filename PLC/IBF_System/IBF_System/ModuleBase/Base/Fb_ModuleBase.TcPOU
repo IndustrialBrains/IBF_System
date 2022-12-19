@@ -8,33 +8,22 @@ VAR_INPUT
 	// main system Inputs
 	bEnable				: 	BOOL	:= FALSE ; // (autolinked) module enable 	
 	bCmdReset 			: 	BOOL	:= FALSE ; // (AutoLinked) reset all faults 
-	bSysFatalFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active
-	bSysCycleFault		: 	BOOL 	:= FALSE ; // (AutoLinked) System fatal fault active 
 	bCmdPause			: 	BOOL 	:= FALSE ; // Pause command	bCmdToStart			
-	// Internal safety 
-	bSafetyOK			: BOOL := FALSE ; // Module internal safety is ok
 END_VAR
 VAR_OUTPUT
 	stIdentity			: UDT_Identity;
 	bAddedToSystem		: BOOL 		:= FALSE 			; // module has been added to the system
- 	// Com to main system
-	sStateIndicator		: 	STRING := ''			; // Operator message, indication of current step or function 
 
 	// Fault indications
-	bMissingCond	: BOOL := FALSE ; // Module missing condition active
-	bFatalFault		: BOOL := FALSE ; // Module fatal fault is active
-	bCycleFault		: BOOL := FALSE ; // Module cycle fault is active
 	bReqPause		: BOOL := FALSE ; // Request for auto cycle pause
 	bReqContinue	: BOOL := FALSE ; // Request for auto cycel continue
 	// Check values
 	bReferenceOk	: BOOL := FALSE ; // All module references  have been checked
 	// State indication
 	bIsSafe			: BOOL := FALSE ; // Module is safe and locked until safety is ok
-	bNoreference	: BOOL := FALSE ; // Module Startup Undefined initialization required
 	bInitialized	: BOOL := FALSE ; // Module startup initialized waiting for startup command
 	bHomed 			: BOOL := FALSE ; // Module startup homed waiting for further further commands
 
-	bHolding 		: BOOL := FALSE ; // Module Module Hold motion command executing
 	bHeld	 		: BOOL := FALSE ; // Module Hold Motion is held until command is released	
 	
 	bResetDone 		: BOOL := FALSE ; // Module reset is done   
@@ -49,17 +38,11 @@ VAR_OUTPUT
 	bStopAuto		: BOOL := FALSE ; // Module Stop automatic
 	bStopping		: BOOL := FALSE ; // MOdule stopping auto cycle
 	
-	bPoweringOff	: BOOL := FALSE ; // Module is powering off
-	bPoweredOff		: BOOL := FALSE ; // Module has powered off 	
-
 	bLocked			: BOOL := FALSE ; // module is locked for commands
 END_VAR
 VAR 
 	// Internal functions 
 	ReCmdReset 			: R_TRIG ;
-	TofResetCmd			: TOF ;
-	// manual functions 
-	bParametersAdded	: BOOL := FALSE ;
 	// Persistent data
 	bCmdWritePersistent : BOOL := FALSE ; // write persistent data to memory
 	// Module data
@@ -210,18 +193,6 @@ END_VAR
 CmdManual := bManual;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="CmdPowerOff" Id="{c9bd01d3-368e-4423-bb7c-d2899324267d}" FolderPath="Commands\">
-      <Declaration><![CDATA[METHOD INTERNAL CmdPowerOff : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[ExecPowerOff();
-bAutomatic := FALSE ;
-
-CmdPowerOff := bPoweredOff;]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="CmdSemiAuto" Id="{791a75b1-1408-4ba1-a250-3359f3233728}" FolderPath="Commands\">
       <Declaration><![CDATA[METHOD INTERNAL CmdSemiAuto : BOOL
 VAR_INPUT
@@ -276,17 +247,6 @@ END_VAR
         <ST><![CDATA[// Call message function
 	GVL_Utilities.fbFaultHandler.CmdAddFault( stFault := stFault, stIdentity);
 
-	// TODO: the stuff below should be handled by the system, not the module???
-//	bFatalFault := fbFaultHandler.bActFF ;
-//	bCycleFault := fbFaultHandler.bActCF ;
-	
-//	IF bFatalFault THEN
-//		ExecSafeStop()	;
-//	ELSIF bCycleFault THEN
-//		bHeld			S= ExecHold();
-//		bHolding 		:= NOT bHeld ;
-//	END_IF
-
 // Call reset functions
 	ReCmdReset( CLK := bCmdReset);
 	
@@ -301,16 +261,7 @@ END_VAR
 	END_IF
 	
 	bCmdReset := FALSE ;
-
-
-	
-// Reset safe state when enable is active
-	bIsSafe R= bSafetyOK ;
-
-// Prevent automatic start when fault is active
-	bStartAuto R= bCmdReset OR bFatalFault OR bCycleFault ;
-	bStopAuto  R= bCmdReset OR bFatalFault OR bCycleFault ;
-	]]></ST>
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHold" Id="{0018095c-5f39-4db3-b3d8-dd0243064ada}" FolderPath="Execute\">
@@ -410,7 +361,8 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bManual := true;]]></ST>
+        <ST><![CDATA[bManual := TRUE;
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecOWAck" Id="{fb622af9-b27d-4227-91f8-b2d1b607c450}" FolderPath="Execute\">
@@ -422,15 +374,6 @@ END_VAR
         <ST><![CDATA[//A helper method to prevent modules that don't use the operator warning
 //to have to handle the acknowledgement
 ExecOWAck := bCmdAckOW;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="ExecPowerOff" Id="{ea164508-7b3d-437c-8288-18cdd09bb9f4}" FolderPath="Execute\">
-      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecPowerOff : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecReset" Id="{16710407-862f-42d6-b9d2-79f884d2291c}" FolderPath="Execute\">

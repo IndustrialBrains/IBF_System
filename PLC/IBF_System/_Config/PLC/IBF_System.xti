@@ -12,17 +12,7 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.iSystemSafetyFault</Name>
-					<Comment><![CDATA[ System safety Fault]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
 					<Name>SystemBase.fbAirpressureOk.Istatus</Name>
-					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.fbCmdResetSafety.Istatus</Name>
 					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
@@ -43,47 +33,27 @@
 				</Var>
 				<Var>
 					<Name>SystemBase.ibEstopOk</Name>
-					<Comment><![CDATA[ system emergency stop ok]]></Comment>
+					<Comment><![CDATA[ System emergency stop ok]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.ibSystemSafetyOK</Name>
-					<Comment><![CDATA[ System is safe ]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.iSafetyFBErr</Name>
+					<Name>SystemBase.ibSafetyFBErr</Name>
 					<Comment><![CDATA[ The "FB Error" group signal]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.iSafetyComErr</Name>
+					<Name>SystemBase.ibSafetyComErr</Name>
 					<Comment><![CDATA[ The "Com Error" group signal]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
-					<Name>SystemBase.iSafetyOtherErr</Name>
-					<Comment><![CDATA[ The "Other Err" group signal]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.iSafetyOutErr</Name>
-					<Comment><![CDATA[ The "Out Err" group signal]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.iSTOFault</Name>
-					<Comment><![CDATA[ Motor safe torque off fault active]]></Comment>
+					<Name>SystemBase.fbCmdReset.Istatus</Name>
+					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 			</Vars>
 			<Vars VarGrpType="2" AreaNo="1">
 				<Name>PlcTask Outputs</Name>
-				<Var>
-					<Name>SystemBase.fbCmdResetSafety.fbLight.qLight</Name>
-					<Comment><![CDATA[ light output]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
 				<Var>
 					<Name>SystemBase.fbValveMainAirSupply.q_Open</Name>
 					<Comment><![CDATA[ Open valve]]></Comment>
@@ -110,6 +80,11 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
+					<Name>SystemBase.fbCmdReset.fbLight.qLight</Name>
+					<Comment><![CDATA[ light output]]></Comment>
+					<Type>BOOL</Type>
+				</Var>
+				<Var>
 					<Name>SystemBase.qbSafetyErrAckn</Name>
 					<Comment><![CDATA[ Safety error acknowledge]]></Comment>
 					<Type>BOOL</Type>
@@ -121,12 +96,7 @@
 				</Var>
 				<Var>
 					<Name>SystemBase.qbResetSafety</Name>
-					<Comment><![CDATA[ reset safety program]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.qbSTOErrAckn</Name>
-					<Comment><![CDATA[ Safet torque off error acnowledge]]></Comment>
+					<Comment><![CDATA[ Reset safety program]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 			</Vars>
