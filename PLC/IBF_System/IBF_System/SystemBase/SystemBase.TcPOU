@@ -589,7 +589,7 @@ CASE eStateSystem OF
 			IF NOT bCmdResetBusy THEN
 				eStateSystem := E_StateSystem.Fault ;
 			END_IF
-		ELSIF bHomed THEN
+		ELSIF bHomed AND bEnabled THEN
 			eStateSystem := E_StateSystem.Idle ;
 		ELSE 
 			eStateSystem := E_StateSystem.Enable ;
