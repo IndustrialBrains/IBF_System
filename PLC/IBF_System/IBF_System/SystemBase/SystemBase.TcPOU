@@ -521,6 +521,9 @@ END_VAR
         <ST><![CDATA[// Check if there are any high-prio faults
 bError := GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] OR GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.FF];
 
+// Default home screen
+IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Idle;
+
 // State machine 
 CASE eStateSystem OF 
 	E_StateSystem.FirstCycle:
@@ -596,7 +599,6 @@ CASE eStateSystem OF
 		END_IF
 
 	E_StateSystem.Idle:
-		IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Idle;
 		fbCmdStartSystem.CmdBlinkSlow();
 		IF bError THEN
 			eStateSystem := E_StateSystem.Fault;
