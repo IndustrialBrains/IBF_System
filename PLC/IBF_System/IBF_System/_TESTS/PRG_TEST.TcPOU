@@ -3,23 +3,19 @@
   <POU Name="PRG_TEST" Id="{8fd80737-52d7-48f7-8910-0003a883abff}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM INTERNAL PRG_TEST
 VAR
+ 	bEnableTests : BOOL;
+
 	fbDummyModule : FB_DummyModule;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[(*
-CONTAINS CODE NEEDED FOR AUTOMATIC TESTING
-*)
+      <ST><![CDATA[IF bEnableTests THEN
+	// SystemBase is the master program. it controls all underlying modules.
+	SystemBase();
 
-// SystemBase is the master program. it controls all underlying modules.
-SystemBase();
-
-// Call modules
-fbDummyModule(nModuleID:= 1);
-
-// HMI control
-// GVL_HMI.fbHMIControl();
-]]></ST>
+	// Call modules
+	fbDummyModule(nModuleID:= 1);
+END_IF]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

@@ -3,7 +3,8 @@
 import sys
 import unittest
 
-from connection import cold_reset, conn, wait_cycles, wait_value
+from connection import (cold_reset, conn, trigger_falling_edge,
+                        trigger_rising_edge, wait_cycles, wait_value)
 
 COLD_RESET = False
 COLD_RESET = True
@@ -11,8 +12,9 @@ COLD_RESET = True
 
 class TestSystem(unittest.TestCase):
 
-    PREFIX = "SystemBase"
-    PREFIX_MODULE = "PRG_TEST.fbDummyModule"
+    PREFIX = "PRG_TEST"
+    PREFIX_SYS = "SystemBase"
+    PREFIX_MODULE = f"{PREFIX}.fbDummyModule"
     PREFIX_HMI = "GVL_HMI.fbHMIControl"
 
     @classmethod
@@ -27,14 +29,8 @@ class TestSystem(unittest.TestCase):
     def setUp(self) -> None:
         if COLD_RESET:
             cold_reset()
+        conn.write_by_name(f"{self.PREFIX}.bEnableTests", True)
         return super().setUp()
-
-    @staticmethod
-    def _trigger_falling_edge(var: str) -> None:
-        conn.write_by_name(var, True)
-        wait_cycles(1)
-        conn.write_by_name(var, False)
-        wait_cycles(1)
 
     def _initalize(self):
         """After cold reset, system ends up in state `Safe`"""
@@ -45,62 +41,62 @@ class TestSystem(unittest.TestCase):
         self._initalize()
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowIsSafe", True)
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowReset", True)
-        conn.write_by_name(f"{self.PREFIX}.ibEstopOk", True)
+        conn.write_by_name(f"{self.PREFIX_SYS}.ibEstopOk", True)
         # Reduce air pressure sensor delay (default 1sec)
-        conn.write_by_name(f"{self.PREFIX}.fbAirpressureOk.tDelay", 0)
-        conn.write_by_name(f"{self.PREFIX}.fbAirpressureOk.Istatus", True)
+        conn.write_by_name(f"{self.PREFIX_SYS}.fbAirpressureOk.tDelay", 0)
+        conn.write_by_name(f"{self.PREFIX_SYS}.fbAirpressureOk.Istatus", True)
         wait_cycles(50) # TODO: why so many cycles?
-        self._trigger_falling_edge(f"{self.PREFIX}.fbCmdReset.Istatus")
-        self.assertTrue(wait_value(f"{self.PREFIX}.bEnabled", True, 1))
+        trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdReset.Istatus")
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bEnabled", True, 1))
 
     def _idle(self):
         """Move from state `Enable` to state `Idle`. Moves through state `Home`"""
         self._enable()
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowHome", True)
-        self._trigger_falling_edge(f"{self.PREFIX}.fbCmdStartSystem.Istatus")
+        trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdStartSystem.Istatus")
 
     def _semiauto(self):
         """Move from state `Idle` to state `SemiAuto`"""
         self._idle()
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowSemiAuto", True)
-        self._trigger_falling_edge(f"{self.PREFIX}.fbCmdStartSystem.Istatus")
+        trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdStartSystem.Istatus")
 
     def _automatic(self):
         """Move from state `SemiAuto` to state `Automatic`
         At least one module needs to be registered, because of the inverted bAutomatic feedback."""
         self._semiauto()
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowAutomatic", True)
-        self._trigger_falling_edge(f"{self.PREFIX}.fbCmdStartAuto.Istatus")
+        trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdStartAuto.Istatus")
 
     def test_01_initialize(self):
         self._initalize()
-        self.assertTrue(conn.read_by_name(f"{self.PREFIX}.bInitialized"))
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bInitialized", True, 1))
 
     def test_02_enable(self):
         self._enable()
 
     def test_03_idle(self):
         self._idle()
-        self.assertTrue(conn.read_by_name(f"{self.PREFIX}.bHomed"))
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bHomed", True, 1))
 
     def test_04_semiauto(self):
         self._semiauto()
-        self.assertTrue(conn.read_by_name(f"{self.PREFIX}.bSemiAuto"))
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bSemiAuto", True, 1))
 
     def test_05_automatic(self):
         self._automatic()
-        self.assertTrue(conn.read_by_name(f"{self.PREFIX}.bAutomatic"))
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bAutomatic", True, 1))
 
     def test_06_manual(self):
         self._enable()
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowManual", True)
         conn.write_by_name(f"{self.PREFIX_HMI}.bInScreenManual", True)
-        self.assertTrue(conn.read_by_name(f"{self.PREFIX}.bManual"))
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bManual", True, 1))
 
     def test_07_fault(self):
         self._enable()
-        conn.write_by_name(f"{self.PREFIX}.ibEstopOk", False)
-        self.assertTrue(wait_value(f"{self.PREFIX}.bEnabled", False, 1))
+        conn.write_by_name(f"{self.PREFIX_SYS}.ibEstopOk", False)
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bEnabled", False, 1))
 
 
 if __name__ == "__main__":

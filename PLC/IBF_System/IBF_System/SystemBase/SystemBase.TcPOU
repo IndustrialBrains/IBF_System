@@ -39,8 +39,8 @@ VAR_OUTPUT
 	
 	bStartAuto			: BOOL := FALSE ; // Start automatic mode
 	bAutomatic 			: BOOL := FALSE ; // Module Work status Module in Automatic mode
-	bStopAuto			: BOOL := FALSE ; // Start automatic mode
-	bStoppingAuto		: BOOL := FALSE ; // Start automatic mode
+	bStopAuto			: BOOL := FALSE ; // Stop automatic mode
+	bStoppingAuto		: BOOL := FALSE ; // Stopping automatic mode
 	
 	bCmdPause			: BOOL := FALSE ; // Pause all modules 
 	bPaused 			: BOOL := FALSE ; // all modules are paused
@@ -121,6 +121,9 @@ ExecSafetyControl();
 
 // Call modules 
 CallModules();
+
+// Call manual control handler (must be done after calling modules, otherwise bCmdManual will toggle
+IBF_Devices.GVL_DevManual.fbManualControler();
 
 // Execute state machine
 ExecSystemRun();
@@ -216,8 +219,7 @@ IF NOT bDevicesAddedtoManual THEN
 	bDevicesAddedtoManual S= TRUE ;
 END_IF
 
-// Call global handlers (except for faulthandler)
-IBF_Devices.GVL_DevManual.fbManualControler();
+// Call global parameter handler
 GVL_Parameters.fbParameterHandler();
 
 // Check air pressure

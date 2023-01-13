@@ -320,7 +320,7 @@ END_IF
 // Call components 
 CallComponents();
 
-// Run automatic function 
+//// Run automatic function 
 IF bStopAuto OR bStopping THEN 
 	bStopping 	:= ExecAutomatic();
 	bAutomatic  := FALSE;
@@ -331,14 +331,15 @@ ELSIF bStartAuto OR bAutomatic THEN
 	bAutomatic 	:= ExecAutomatic();
 	bStartAuto 	:= FALSE;
 	bSemiAuto	:= FALSE;
-ELSIF bEnable AND NOT bAutomatic AND NOT bStopping THEN
-	bAutomatic 	:= FALSE;
-	bSemiAuto  	:= ExecSemiAuto();
-ELSE
-	bStopping   := FALSE;
-	bAutomatic 	:= FALSE;
-	bSemiAuto	:= FALSE;
 END_IF
+//ELSIF bEnable AND NOT bAutomatic AND NOT bStopping THEN
+//	bAutomatic 	:= FALSE;
+//	bSemiAuto  	:= ExecSemiAuto();
+//ELSE
+//	bStopping   := FALSE;
+//	bAutomatic 	:= FALSE;
+//	bSemiAuto	:= FALSE;
+//END_IF
 
 // Run Base Functions 
 IF bInitialized 
