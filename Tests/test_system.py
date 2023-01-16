@@ -15,7 +15,6 @@ class TestSystem(unittest.TestCase):
     PREFIX = "PRG_TEST"
     PREFIX_SYS = "SystemBase"
     PREFIX_MODULE = f"{PREFIX}.fbDummyModule"
-    PREFIX_HMI = "GVL_HMI.fbHMIControl"
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -67,10 +66,15 @@ class TestSystem(unittest.TestCase):
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowAutomatic", True)
         trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdStartAuto.Istatus")
 
-    def _manual(self):
+    def _manual(self, assert_ok: bool=False):
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowManual", True)
-        conn.write_by_name(f"{self.PREFIX_HMI}.bInScreenManual", True)
-        conn.write_by_name("GVL_DevManual.fbManualControler.stHMI.bEnabled", True)
+        conn.write_by_name("GVL_HMI.fbHMIControl.bInScreenManual", True) 
+        conn.write_by_name("GVL_Devices.fbManualController.stHMI.bEnabled", True) # Enable button in HMI
+        if assert_ok:
+            self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bManual", True, 1))
+        else:
+            wait_value(f"{self.PREFIX_SYS}.bManual", True, 1)
+
 
     def test_01_initialize(self):
         self._initalize()
@@ -96,8 +100,7 @@ class TestSystem(unittest.TestCase):
 
     def test_06_manual_from_enabled(self):
         self._enable()
-        self._manual();
-        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bManual", True, 1))
+        self._manual(assert_ok=True);
 
     def test_06_manual_from_semiauto(self):
         self._semiauto()
@@ -114,15 +117,13 @@ class TestSystem(unittest.TestCase):
     def test_06_manual_to_semiauto(self):
         self._enable()
         self._manual();
-        wait_value(f"{self.PREFIX_SYS}.bManual", True, 1)
         self._semiauto()
         wait_cycles(10)
         self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bSemiAuto"))
 
     def test_06_manual_to_auto(self):
         self._enable()
-        self._manual();
-        wait_value(f"{self.PREFIX_SYS}.bManual", True, 1)
+        self._manual()
         self._semiauto()
         wait_cycles(10)
         self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bAutomatic"))
