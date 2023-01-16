@@ -83,10 +83,6 @@ VAR
 	// Power down system function
 	fTrigPowerSupply			: F_TRIG ; // falling edge trigger for power supply
 	ntShutDown					: NT_Shutdown ; // shutdown system function 
-
-	// Manual controller
-	bDevicesAddedtoManual 		: BOOL := FALSE ; // Add system device (buttons) to manual controller
-
 END_VAR
 VAR // safety 
 	// inputs 
@@ -123,7 +119,7 @@ ExecSafetyControl();
 CallModules();
 
 // Call manual control handler (must be done after calling modules, otherwise bCmdManual will toggle
-IBF_Devices.GVL_DevManual.fbManualControler();
+IBF_Devices.GVL_Devices.fbManualController(bBlockManualMode := (eStateSystem <> E_StateSystem.Manual));
 
 // Execute state machine
 ExecSystemRun();
@@ -207,39 +203,24 @@ END_VAR
         <ST><![CDATA[// Update system variables 
 fbSetSystemVariables();
 
-// Add device functions to manual controller 
-IF NOT bDevicesAddedtoManual THEN
-	IF bIcfAirCheckPresent THEN
-		IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbAirpressureOk 	);
-	END_IF
-	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartSystem	);
-	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStartAuto		);
-	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdStopAuto		);
-	IBF_Devices.GVL_DevManual.fbManualControler.CmdAddDevice( refToDevice := fbCmdReset	);
-	bDevicesAddedtoManual S= TRUE ;
-END_IF
-
 // Call global parameter handler
 GVL_Parameters.fbParameterHandler();
 
 // Check air pressure
 IF bIcfAirCheckPresent THEN
-	fbAirpressureOk(refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+	fbAirpressureOk();
 	bAirOk := fbAirpressureOk.bFcoDelay ;
 ELSE
 	bAirOk := TRUE ;
 END_IF
 
 // Execute button functions 
-fbStartAuto		( 	tDelay			:= T#100MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-fbStartSemiAuto ( 	tDelay			:= T#100MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
-fbCmdReset 		( 	tDelay			:= T#5000MS,
-					refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler); 
-fbCmdStartSystem(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-fbCmdStartAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
-fbCmdStopAuto	(	refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+fbStartAuto		(tDelay	:= T#100MS);
+fbStartSemiAuto (tDelay	:= T#100MS); 
+fbCmdReset 		(tDelay	:= T#5000MS); 
+fbCmdStartSystem();
+fbCmdStartAuto	();
+fbCmdStopAuto	();
 
 // Reset button (lamp)
 IF (GVL_Utilities.fbFaultHandler.nActiveFaults > 0) THEN
@@ -257,7 +238,7 @@ END_IF
 
 // execute input functions
 fbValveMainAirSupply(	bEnable			:= TRUE,
-						refFbManualCtrl	:= IBF_Devices.GVL_DevManual.fbManualControler);
+						refFbManualCtrl	:= IBF_Devices.GVL_Devices.fbManualController);
 
 ]]></ST>
       </Implementation>
@@ -617,7 +598,7 @@ CASE eStateSystem OF
 			eStateSystem := E_StateSystem.Fault;
 		ELSIF fbCmdReset.bFeStatus THEN
 			eStateSystem := E_StateSystem.Safe;			
-		ELSIF IBF_Devices.GVL_DevManual.bManualModeActive THEN
+		ELSIF IBF_Devices.GVL_Devices.fbManualController.bActive THEN
 			ExecManual();
 		END_IF
 		
