@@ -127,7 +127,9 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF NOT bAutomatic THEN 
+        <ST><![CDATA[// CmdAutomatic follows a different pattern than CmdSemiAuto, because Automatic mode can receive start/stop commands.
+// Therefore, ExecAutomatic is called by ExecMainBaseFunctions instead of this method.
+IF NOT bAutomatic THEN 
 	bStartAuto 		:= TRUE ;
 	bStopping		:= FALSE;
 END_IF 
@@ -155,7 +157,6 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[ExecHold();
-
 
 CmdHold := bHeld ;]]></ST>
       </Implementation>
@@ -190,7 +191,8 @@ END_VAR
       <Implementation>
         <ST><![CDATA[ExecManual();
 
-CmdManual := bManual;]]></ST>
+CmdManual := bManual;
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="CmdSemiAuto" Id="{791a75b1-1408-4ba1-a250-3359f3233728}" FolderPath="Commands\">
@@ -201,7 +203,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[ExecSemiAuto();
 
-CmdSemiAuto := bSemiAuto ;
+CmdSemiAuto := bSemiAuto;
 
 ]]></ST>
       </Implementation>
@@ -230,7 +232,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="ExecBaseFunctions" Id="{9ca3b82c-fc59-4a02-b721-3d67056da31e}" FolderPath="Execute\">
-      <Declaration><![CDATA[METHOD PUBLIC ExecBaseFunctions : BOOL
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecBaseFunctions : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -357,13 +359,12 @@ END_IF
       </Implementation>
     </Method>
     <Method Name="ExecManual" Id="{63d94b51-c5c2-4d65-84f7-21d85d57b86f}" FolderPath="Execute\">
-      <Declaration><![CDATA[METHOD PROTECTED ExecManual : BOOL
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecManual : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[bManual := TRUE;
-]]></ST>
+        <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecOWAck" Id="{fb622af9-b27d-4227-91f8-b2d1b607c450}" FolderPath="Execute\">

@@ -24,10 +24,7 @@ VAR
 	nCallsToExecSemiAuto : ULINT;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[SUPER^();
-
-{warning: 'Code smell: bManual does not follow the same pattern as the other commands'}		
-bManual := bAllowManual;]]></ST>
+      <ST><![CDATA[SUPER^();]]></ST>
     </Implementation>
     <Method Name="CallComponents" Id="{d2169844-dc1c-4e3e-913f-09fb324d2664}">
       <Declaration><![CDATA[METHOD PROTECTED  CallComponents : BOOL
@@ -58,6 +55,15 @@ ExecAutomatic := bAutomatic;
 
 nCallsToExecAutomatic := nCallsToExecAutomatic + 1;
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecBaseFunctions" Id="{91fad65e-de57-0ad4-0ec6-0aa0fc0eaaa9}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecBaseFunctions : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecHold" Id="{6ab5aac9-fc82-4cd6-bf01-8fd5a60b4e40}">
@@ -105,7 +111,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[SUPER^.ExecManual();
+        <ST><![CDATA[bManual := bAllowManual;
 
 nCallsToExecManual := nCallsToExecManual + 1;
 ]]></ST>

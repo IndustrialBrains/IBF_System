@@ -47,7 +47,6 @@ class TestSystem(unittest.TestCase):
         conn.write_by_name(f"{self.PREFIX_SYS}.fbAirpressureOk.Istatus", True)
         wait_cycles(50) # TODO: why so many cycles?
         trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdReset.Istatus")
-        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bEnabled", True, 1))
 
     def _idle(self):
         """Move from state `Enable` to state `Idle`. Moves through state `Home`"""
@@ -68,12 +67,18 @@ class TestSystem(unittest.TestCase):
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowAutomatic", True)
         trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdStartAuto.Istatus")
 
+    def _manual(self):
+        conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowManual", True)
+        conn.write_by_name(f"{self.PREFIX_HMI}.bInScreenManual", True)
+        conn.write_by_name("GVL_DevManual.fbManualControler.stHMI.bEnabled", True)
+
     def test_01_initialize(self):
         self._initalize()
         self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bInitialized", True, 1))
 
     def test_02_enable(self):
         self._enable()
+        self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bEnabled", True, 1))
 
     def test_03_idle(self):
         self._idle()
@@ -82,16 +87,45 @@ class TestSystem(unittest.TestCase):
     def test_04_semiauto(self):
         self._semiauto()
         self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bSemiAuto", True, 1))
+        self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bAutomatic"))
 
     def test_05_automatic(self):
         self._automatic()
         self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bAutomatic", True, 1))
+        self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bSemiAuto"))
 
-    def test_06_manual(self):
+    def test_06_manual_from_enabled(self):
         self._enable()
-        conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowManual", True)
-        conn.write_by_name(f"{self.PREFIX_HMI}.bInScreenManual", True)
+        self._manual();
         self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bManual", True, 1))
+
+    def test_06_manual_from_semiauto(self):
+        self._semiauto()
+        self._manual();
+        wait_cycles(10)
+        self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bManual"))
+
+    def test_06_manual_from_automatic(self):
+        self._automatic()
+        self._manual();
+        wait_cycles(10)
+        self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bManual"))
+
+    def test_06_manual_to_semiauto(self):
+        self._enable()
+        self._manual();
+        wait_value(f"{self.PREFIX_SYS}.bManual", True, 1)
+        self._semiauto()
+        wait_cycles(10)
+        self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bSemiAuto"))
+
+    def test_06_manual_to_auto(self):
+        self._enable()
+        self._manual();
+        wait_value(f"{self.PREFIX_SYS}.bManual", True, 1)
+        self._semiauto()
+        wait_cycles(10)
+        self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bAutomatic"))
 
     def test_07_fault(self):
         self._enable()
