@@ -215,12 +215,12 @@ ELSE
 END_IF
 
 // Execute button functions 
-fbStartAuto		(tDelay	:= T#100MS);
-fbStartSemiAuto (tDelay	:= T#100MS); 
-fbCmdReset 		(tDelay	:= T#5000MS); 
-fbCmdStartSystem();
-fbCmdStartAuto	();
-fbCmdStopAuto	();
+fbStartAuto		(tDelay	:= T#100MS, bEmbeded := TRUE);
+fbStartSemiAuto (tDelay	:= T#100MS, bEmbeded := TRUE); 
+fbCmdReset 		(tDelay	:= T#5000MS, bEmbeded := TRUE); 
+fbCmdStartSystem(bEmbeded := TRUE);
+fbCmdStartAuto	(bEmbeded := TRUE);
+fbCmdStopAuto	(bEmbeded := TRUE);
 
 // Reset button (lamp)
 IF (GVL_Utilities.fbFaultHandler.nActiveFaults > 0) THEN
