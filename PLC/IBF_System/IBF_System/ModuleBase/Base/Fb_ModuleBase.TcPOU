@@ -134,6 +134,9 @@ IF NOT bAutomatic THEN
 	bStopping		:= FALSE;
 END_IF 
 
+bSemiAuto	:= FALSE;
+bManual		:= FALSE;
+
 CmdAutomatic 	:= bAutomatic;]]></ST>
       </Implementation>
     </Method>
@@ -144,8 +147,9 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[ExecSafeStop();
-bSemiAuto		:= FALSE ;
-bAutomatic 		:= FALSE ;
+bSemiAuto	:= FALSE;
+bAutomatic 	:= FALSE;
+bManual		:= FALSE;
 
 CmdEstop := bIsSafe ;]]></ST>
       </Implementation>
@@ -191,6 +195,9 @@ END_VAR
       <Implementation>
         <ST><![CDATA[ExecManual();
 
+bSemiAuto	:= FALSE;
+bAutomatic 	:= FALSE;
+
 CmdManual := bManual;
 ]]></ST>
       </Implementation>
@@ -202,6 +209,9 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[ExecSemiAuto();
+
+bAutomatic 	:= FALSE;
+bManual		:= FALSE;
 
 CmdSemiAuto := bSemiAuto;
 
@@ -328,20 +338,10 @@ IF bStopAuto OR bStopping THEN
 	bAutomatic  := FALSE;
 	bStopAuto	:= FALSE;
 	bStartAuto 	:= FALSE;
-	bSemiAuto	:= FALSE;
 ELSIF bStartAuto OR bAutomatic THEN 
 	bAutomatic 	:= ExecAutomatic();
 	bStartAuto 	:= FALSE;
-	bSemiAuto	:= FALSE;
 END_IF
-//ELSIF bEnable AND NOT bAutomatic AND NOT bStopping THEN
-//	bAutomatic 	:= FALSE;
-//	bSemiAuto  	:= ExecSemiAuto();
-//ELSE
-//	bStopping   := FALSE;
-//	bAutomatic 	:= FALSE;
-//	bSemiAuto	:= FALSE;
-//END_IF
 
 // Run Base Functions 
 IF bInitialized 
