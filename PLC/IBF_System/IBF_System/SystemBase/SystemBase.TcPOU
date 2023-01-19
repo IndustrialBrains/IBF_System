@@ -438,12 +438,7 @@ ELSIF ibSafetyComErr THEN
 	stFault.Description	:= 'Safety module communication fault';
 
 ELSIF NOT ibEstopOk THEN
-	IF bInitialized THEN
-		stFault.Description	:= 'Emergency stop pressed';
-	ELSE
-		// TODO: move to more logical place (state machine?)
-		stFault.Description	:= 'Unable to initialize system';
-	END_IF
+	stFault.Description	:= 'Emergency stop pressed';
 
 ELSIF NOT bAirOk THEN
 	stFault.Description	:= 'Main air pressure low';
@@ -525,7 +520,7 @@ CASE eStateSystem OF
 	E_StateSystem.LoadParameters:
 		bParametersLoaded := GVL_Parameters.fbParameterHandler.Init();
 		IF bParametersLoaded OR GVL_Parameters.fbParameterHandler.bFault THEN
-			// TODO: trigger fault when fbparameterhandler is unable to read parameters
+			{warning 'TODO: trigger fault when fbparameterhandler is unable to read parameters'}
 			eStateSystem := E_StateSystem.Safe ;
 		END_IF
 
