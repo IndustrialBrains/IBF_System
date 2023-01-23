@@ -345,6 +345,19 @@ bHoming := NOT bHomed;
 ExecHoming := bHomed;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecIdle" Id="{99429c16-d58c-06e5-35f0-4f12bc722d3c}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD INTERNAL ExecIdle
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Run module idle function
+FOR i := 1 TO nNumberOfModules DO 
+	arpModules[i].pFunction^.CmdIdle() ;
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecManual" Id="{1eeb2405-fd6d-491e-8ef7-e639f5684ed3}" FolderPath="ModuleFunctions\">
       <Declaration><![CDATA[METHOD PUBLIC ExecManual : BOOL
 VAR
@@ -577,6 +590,7 @@ CASE eStateSystem OF
 		END_IF
 
 	E_StateSystem.Idle:
+		ExecIdle();
 		fbCmdStartSystem.CmdBlinkSlow();
 		IF bError THEN
 			eStateSystem := E_StateSystem.Fault;

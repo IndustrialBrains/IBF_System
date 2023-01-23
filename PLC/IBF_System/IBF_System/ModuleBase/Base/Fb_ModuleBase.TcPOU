@@ -176,6 +176,17 @@ END_VAR
 CmdHome := bHomed;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CmdIdle" Id="{2362863a-75a6-053c-3279-14d3ffe7bf63}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdIdle
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecIdle();
+
+bSemiAuto	:= FALSE;
+bAutomatic 	:= FALSE;
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="CmdInit" Id="{83c2609c-15fb-4eeb-beb4-42411df76941}" FolderPath="Commands\">
       <Declaration><![CDATA[METHOD INTERNAL CmdInit : BOOL
 VAR_INPUT
@@ -294,6 +305,15 @@ END_VAR
         <ST><![CDATA[
 
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecIdle" Id="{e1fcc6e8-6908-0408-1b21-e88506379db1}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecIdle
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
     <Method Name="ExecInit" Id="{6bbf633c-be70-4b2b-b0ef-e1874d2714eb}" FolderPath="Execute\">

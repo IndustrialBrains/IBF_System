@@ -92,6 +92,15 @@ nCallsToExecHome := nCallsToExecHome + 1;
 ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecIdle" Id="{632a345a-3285-0b20-27dd-9762633eb1c8}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecIdle
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecInit" Id="{02ca3dd5-4e2d-4a98-bf2f-6e10b13580f5}">
       <Declaration><![CDATA[METHOD PROTECTED  ExecInit : BOOL
 VAR_INPUT
