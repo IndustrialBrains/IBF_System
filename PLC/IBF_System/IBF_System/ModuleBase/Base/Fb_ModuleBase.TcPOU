@@ -70,7 +70,6 @@ IF NOT bReferenceOk THEN
 ELSE 
 	// Execute functions
 	ExecMainBaseFunctions();
-	SetCycles();
 END_IF
 
 // Reset pause request 
@@ -389,15 +388,6 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="SetCycles" Id="{07e66b20-f86f-4d1a-9676-d73dc8a332a7}" FolderPath="Execute\">
-      <Declaration><![CDATA[METHOD PROTECTED SetCycles : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SetCycles := true ;]]></ST>
       </Implementation>
     </Method>
   </POU>
