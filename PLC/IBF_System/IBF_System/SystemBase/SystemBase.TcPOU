@@ -436,7 +436,8 @@ ExecSafeStop := bIsSafe ;]]></ST>
 // NOTES: some faults trigger a automatic safety circuit reset
 
 // Not safe, until proven otherwise
-stFault.Active := TRUE ;
+stFault.Active := TRUE;
+stFault.FaultType := E_FaultTypes.FF;
 
 IF ibSafetyFBErr THEN 
 	IF NOT qbRunSafety AND NOT TofSafetyErrAck.Q THEN 
@@ -450,10 +451,10 @@ ELSIF ibSafetyComErr THEN
 	END_IF
 	stFault.Description	:= 'Safety module communication fault';
 
-ELSIF NOT ibEstopOk THEN
+ELSIF (NOT ibEstopOk) AND (bInitialized OR bInitializing) THEN
 	stFault.Description	:= 'Emergency stop pressed';
 
-ELSIF NOT bAirOk THEN
+ELSIF (NOT bAirOk) AND (bInitialized OR bInitializing) THEN
 	stFault.Description	:= 'Main air pressure low';
 	
 ELSE // Everything OK!
@@ -532,8 +533,12 @@ CASE eStateSystem OF
 
 	E_StateSystem.LoadParameters:
 		bParametersLoaded := GVL_Parameters.fbParameterHandler.Init();
-		IF bParametersLoaded OR GVL_Parameters.fbParameterHandler.bFault THEN
-			{warning 'TODO: trigger fault when fbparameterhandler is unable to read parameters'}
+		IF GVL_Parameters.fbParameterHandler.bFault THEN
+			stFault.Active := TRUE;
+			stFault.FaultType := E_FaultTypes.OW;
+			stFault.Description := CONCAT('ParameterHandler: ', GVL_Parameters.fbParameterHandler.sFaultDescription);
+			eStateSystem := E_StateSystem.Safe ;
+		ELSIF bParametersLoaded THEN
 			eStateSystem := E_StateSystem.Safe ;
 		END_IF
 

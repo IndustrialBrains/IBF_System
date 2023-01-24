@@ -3,8 +3,7 @@
 import sys
 import unittest
 
-from connection import (cold_reset, conn, trigger_falling_edge,
-                        trigger_rising_edge, wait_cycles, wait_value)
+from connection import cold_reset, conn, trigger_falling_edge, wait_cycles, wait_value
 
 COLD_RESET = False
 COLD_RESET = True
@@ -44,7 +43,7 @@ class TestSystem(unittest.TestCase):
         # Reduce air pressure sensor delay (default 1sec)
         conn.write_by_name(f"{self.PREFIX_SYS}.fbAirpressureOk.tDelay", 0)
         conn.write_by_name(f"{self.PREFIX_SYS}.fbAirpressureOk.Istatus", True)
-        wait_cycles(50) # TODO: why so many cycles?
+        wait_cycles(50)  # TODO: why so many cycles?
         trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdReset.Istatus")
 
     def _idle(self):
@@ -66,15 +65,16 @@ class TestSystem(unittest.TestCase):
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowAutomatic", True)
         trigger_falling_edge(f"{self.PREFIX_SYS}.fbCmdStartAuto.Istatus")
 
-    def _manual(self, assert_ok: bool=False):
+    def _manual(self, assert_ok: bool = False):
         conn.write_by_name(f"{self.PREFIX_MODULE}.bAllowManual", True)
-        conn.write_by_name("GVL_HMI.fbHMIControl.bInScreenManual", True) 
-        conn.write_by_name("GVL_Devices.fbManualController.stHMI.bEnabled", True) # Enable button in HMI
+        conn.write_by_name("GVL_HMI.fbHMIControl.bInScreenManual", True)
+        conn.write_by_name(
+            "GVL_Devices.fbManualController.stHMI.bEnabled", True
+        )  # "Enable manual control" button in HMI
         if assert_ok:
             self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bManual", True, 1))
         else:
             wait_value(f"{self.PREFIX_SYS}.bManual", True, 1)
-
 
     def test_01_initialize(self):
         self._initalize()
@@ -100,23 +100,23 @@ class TestSystem(unittest.TestCase):
 
     def test_06_manual_from_enabled(self):
         self._enable()
-        self._manual(assert_ok=True);
+        self._manual(assert_ok=True)
 
     def test_06_manual_from_semiauto(self):
         self._semiauto()
-        self._manual();
+        self._manual()
         wait_cycles(10)
         self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bManual"))
 
     def test_06_manual_from_automatic(self):
         self._automatic()
-        self._manual();
+        self._manual()
         wait_cycles(10)
         self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bManual"))
 
     def test_06_manual_to_semiauto(self):
         self._enable()
-        self._manual();
+        self._manual()
         self._semiauto()
         wait_cycles(10)
         self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bSemiAuto"))
@@ -128,7 +128,7 @@ class TestSystem(unittest.TestCase):
         wait_cycles(10)
         self.assertFalse(conn.read_by_name(f"{self.PREFIX_SYS}.bAutomatic"))
 
-    def test_07_fault(self):
+    def test_07_fault_estop(self):
         self._enable()
         conn.write_by_name(f"{self.PREFIX_SYS}.ibEstopOk", False)
         self.assertTrue(wait_value(f"{self.PREFIX_SYS}.bEnabled", False, 1))
