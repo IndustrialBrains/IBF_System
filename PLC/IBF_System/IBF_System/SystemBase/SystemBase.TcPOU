@@ -78,7 +78,7 @@ VAR
 
  	// Module states
 	nNumberOfModules			: UDINT := 0 ; // Number of modules added to the system 
-	arpModules					: ARRAY [1..gvl_main.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
+	arpModules					: ARRAY [1..GVL_System.cnMaxNUMBEROFMODULES] OF Udt_ModuleId ; 
 
 	// Power down system function
 	fTrigPowerSupply			: F_TRIG ; // falling edge trigger for power supply
@@ -255,7 +255,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Check if device is not already in the array 
-FOR i:= 1 TO GVL_Main.cnMaxNUMBEROFMODULES DO
+FOR i:= 1 TO GVL_System.cnMaxNUMBEROFMODULES DO
 	IF arpModules[i].pFunction = 0 THEN 
 		nNumberOfModules:= i;
 		EXIT;	
@@ -265,7 +265,7 @@ FOR i:= 1 TO GVL_Main.cnMaxNUMBEROFMODULES DO
 END_FOR
 
 // If device is not found add device to the list
-IF NOT bModuleAdded AND nNumberOfModules >= 1 AND nNumberOfModules <= GVL_Main.cnMaxNUMBEROFMODULES THEN
+IF NOT bModuleAdded AND nNumberOfModules >= 1 AND nNumberOfModules <= GVL_System.cnMaxNUMBEROFMODULES THEN
 	arpModules[nNumberOfModules].nNumber 	:= refToModule.nModuleID;
 	arpModules[nNumberOfModules].sName		:= refToModule.stIdentity.sName	;
 	arpModules[nNumberOfModules].pFunction 	:= ADR(refToModule)		;	
@@ -689,7 +689,7 @@ IBF_HMI.GVL_HMI.fbHMIControl.sStatusText := TO_STRING(eStateSystem);
       <Implementation>
         <ST><![CDATA[// If the system has an UPS, shutdown immediately if power goes down 
 fTrigPowerSupply(CLK := ibPowerSupplyOk);
-ntShutDown(START := GVL_Main.cbUPSPRESENT AND fTrigPowerSupply.Q); 
+ntShutDown(START := GVL_System.cbUPSPRESENT AND fTrigPowerSupply.Q); 
 ]]></ST>
       </Implementation>
     </Action>

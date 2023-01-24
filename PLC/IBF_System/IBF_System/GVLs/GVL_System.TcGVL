@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
-  <GVL Name="GVL_Main" Id="{908c133f-8f32-4327-a1b8-222df9031ea5}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="GVL_System" Id="{908c133f-8f32-4327-a1b8-222df9031ea5}">
     <Declaration><![CDATA[
 {attribute 'qualified_only'} // Main system variables and state indicators
 {attribute 'analysis':= '-33'}
