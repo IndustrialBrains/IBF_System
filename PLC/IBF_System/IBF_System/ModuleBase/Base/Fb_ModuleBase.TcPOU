@@ -126,6 +126,17 @@ bManual		:= FALSE;
 CmdAutomatic 	:= bAutomatic;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="CmdEnable" Id="{53f7bfc5-68f1-04e1-3cfc-7dd9418a3521}" FolderPath="Commands\">
+      <Declaration><![CDATA[METHOD INTERNAL CmdEnable
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ExecEnable();
+
+bSemiAuto	:= FALSE;
+bAutomatic 	:= FALSE;
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="CmdEstop" Id="{d05300f1-aa34-43f5-a9f7-94f7856dd9ba}" FolderPath="Commands\">
       <Declaration><![CDATA[METHOD INTERNAL CmdEstop : BOOL
 VAR_INPUT
@@ -240,6 +251,15 @@ END_VAR
     </Method>
     <Method Name="ExecBaseFunctions" Id="{9ca3b82c-fc59-4a02-b721-3d67056da31e}" FolderPath="Execute\">
       <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecBaseFunctions : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ExecEnable" Id="{7334e61e-66b3-055f-220e-5ce8c308e462}" FolderPath="Execute\">
+      <Declaration><![CDATA[METHOD PROTECTED ABSTRACT ExecEnable
 VAR_INPUT
 END_VAR
 ]]></Declaration>

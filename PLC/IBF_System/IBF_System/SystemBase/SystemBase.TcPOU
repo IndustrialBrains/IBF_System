@@ -308,6 +308,21 @@ END_IF
 ExecAutomatic := NOT bStartAuto;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecEnable" Id="{cd139c8b-3639-05ff-18d3-b0a09f057af4}" FolderPath="ModuleFunctions\">
+      <Declaration><![CDATA[METHOD INTERNAL ExecEnable
+VAR
+	i : UDINT ;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bEnabling := TRUE;
+
+// Run module enable function
+FOR i := 1 TO nNumberOfModules DO 
+	arpModules[i].pFunction^.CmdEnable() ;
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecFaultHandling" Id="{4f8ea78e-6627-05b4-0046-c75f4d368b89}" FolderPath="SystemFunction\">
       <Declaration><![CDATA[METHOD PRIVATE ExecFaultHandling
 ]]></Declaration>
@@ -351,7 +366,9 @@ VAR
 	i : UDINT ;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Run module idle function
+        <ST><![CDATA[fbCmdStartSystem.CmdBlinkSlow();
+
+// Run module idle function
 FOR i := 1 TO nNumberOfModules DO 
 	arpModules[i].pFunction^.CmdIdle() ;
 END_FOR
@@ -556,7 +573,7 @@ CASE eStateSystem OF
 		END_IF
 
 	E_StateSystem.Enable:
-		bEnabling := TRUE;
+		ExecEnable();
 		IF bError THEN
 			eStateSystem := E_StateSystem.Fault;
 		ELSIF GVL_HMI.fbHMIControl.bInScreenManual THEN
@@ -596,7 +613,6 @@ CASE eStateSystem OF
 
 	E_StateSystem.Idle:
 		ExecIdle();
-		fbCmdStartSystem.CmdBlinkSlow();
 		IF bError THEN
 			eStateSystem := E_StateSystem.Fault;
 		ELSIF fbCmdReset.bFeStatus THEN
