@@ -66,6 +66,15 @@ END_VAR
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ExecEnable" Id="{ba1fb24f-b916-0401-1dd8-a8495c96d242}">
+      <Declaration><![CDATA[METHOD PROTECTED  ExecEnable
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="ExecHold" Id="{6ab5aac9-fc82-4cd6-bf01-8fd5a60b4e40}">
       <Declaration><![CDATA[METHOD PROTECTED  ExecHold : BOOL
 VAR_INPUT

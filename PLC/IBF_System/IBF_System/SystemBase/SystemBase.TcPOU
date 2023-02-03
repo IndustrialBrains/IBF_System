@@ -68,6 +68,7 @@ VAR
 	fbCmdReset		 			: FB_DevPushbuttonLight 		; // System reset
 	
 	// System state
+	fbStateMachine				: FB_StateMachine;
 	eStateSystem				: E_StateSystem := E_StateSystem.FirstCycle; // State of system
 	
 	// Set system variables
@@ -202,6 +203,9 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// Update system variables 
 fbSetSystemVariables();
+
+// Call logger
+GVL_Utilities.fbLogger(bEnable := TRUE);
 
 // Call global parameter handler
 GVL_Parameters.fbParameterHandler();
@@ -533,14 +537,32 @@ bError := GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] OR GV
 // Default home screen
 IBF_HMI.GVL_HMI.fbHMIControl.eHomeScreen := E_BaseVisu.Idle;
 
-// State machine 
+// State machine
+fbStateMachine(nState := eStateSystem);
+
+// Log all system state changes
+// NOTE: this is not required, but at least 1 log message must be added to initialize the logger
+IF fbStateMachine.bStateChanged THEN
+	GVL_Utilities.fbLogger.AddToLog(CONCAT('System state changed to ', TO_STRING(eStateSystem)));
+END_IF
+ 
 CASE eStateSystem OF 
 	E_StateSystem.FirstCycle:
-		eStateSystem 	:= E_StateSystem.CheckReferences;
+		eStateSystem 	:= E_StateSystem.EnableLogger;
+
+	E_StateSystem.EnableLogger:
+		IF GVL_Utilities.fbLogger.bLoggerInitialized THEN
+			eStateSystem 	:= E_StateSystem.CheckReferences;
+		ELSIF GVL_Utilities.fbLogger.bFault THEN
+			stFault.Active := TRUE;
+			stFault.FaultType := E_FaultTypes.OW;
+			stFault.Description := CONCAT('Logger: ', GVL_Utilities.fbLogger.sFaultDescription);
+			eStateSystem 	:= E_StateSystem.CheckReferences;
+		END_IF
 
 	E_StateSystem.CheckReferences:
 		IF bReferenceOk THEN
-			eStateSystem 	:= E_StateSystem.Initialize ;
+			eStateSystem := E_StateSystem.Initialize ;
 		END_IF
 
 	E_StateSystem.Initialize:
