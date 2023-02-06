@@ -48,6 +48,17 @@ VAR_OUTPUT
 	bModuleLocked		: BOOL := FALSE ; // a module is locked for commands
 END_VAR
 VAR
+	// Logger & loghandlers
+	fbLogHandler_TxtFile : FB_LogHandler_TxtFile(
+								sLogFolder := PAR_System.LOG_FOLDER,
+								sLogFilePrefix := 'Log_',
+								sLogFileExtension := 'txt',
+								nMaxLogFileSize := 256*1024, // 256kb is enough for at least 1000 lines. The HMI text editor should be able to handle this (tested on a TwinCAT/BSB VM).
+								nMaxNumberOfLogFiles := 100 // 256kb * 100 = 25MB
+							);
+	fbLogHandler_RetainableList : FB_LogHandler_RetainableList;
+	fbLogger : FB_Logger();
+			
 	// System inputs 
 	ibPowerSupplyOk	 	AT%I*	: BOOL  ; // System Power supply is ok 
 	fbAirpressureOk 			: Fb_DevDigitalInputFunctions  	; // system airpressure is ok
@@ -197,15 +208,13 @@ END_FOR
     </Method>
     <Method Name="CallSystemFunctions" Id="{5be4e1d6-b194-4082-99a1-645b475d1410}" FolderPath="SystemFunction\">
       <Declaration><![CDATA[METHOD PRIVATE CallSystemFunctions : BOOL
-VAR_INPUT
-END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Update system variables 
 fbSetSystemVariables();
 
-// Call logger
-GVL_Utilities.fbLogger(bEnable := TRUE);
+// Run logger
+fbLogger.Run();
 
 // Call global parameter handler
 GVL_Parameters.fbParameterHandler();
@@ -528,6 +537,7 @@ ExecSemiAuto := bSemiAuto;]]></ST>
       <Declaration><![CDATA[METHOD INTERNAL ExecSystemRun
 VAR
 	bError : BOOL; // An error is active (fatal fault or cycle fault)
+	sDummyString : T_MaxString;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -543,20 +553,25 @@ fbStateMachine(nState := eStateSystem);
 // Log all system state changes
 // NOTE: this is not required, but at least 1 log message must be added to initialize the logger
 IF fbStateMachine.bStateChanged THEN
-	GVL_Utilities.fbLogger.AddToLog(CONCAT('System state changed to ', TO_STRING(eStateSystem)));
+	fbLogger.DEBUG(CONCAT('System state changed to ', TO_STRING(eStateSystem)));
 END_IF
  
 CASE eStateSystem OF 
 	E_StateSystem.FirstCycle:
-		eStateSystem 	:= E_StateSystem.EnableLogger;
+		// Add log handlers
+		sDummyString := PAR_System.LOG_FOLDER; // Suppress unused variable error (Beckhoff bug)
+		fbLogger.AddLogHandler(fbLogHandler_TxtFile);
+		fbLogger.AddLogHandler(fbLogHandler_RetainableList);
+		eStateSystem 	:= E_StateSystem.CheckLogger;
 
-	E_StateSystem.EnableLogger:
-		IF GVL_Utilities.fbLogger.bLoggerInitialized THEN
+	E_StateSystem.CheckLogger:
+		// Check if log handlers have been initialized correctly
+		IF fbLogHandler_TxtFile.bLoggerInitialized THEN
 			eStateSystem 	:= E_StateSystem.CheckReferences;
-		ELSIF GVL_Utilities.fbLogger.bFault THEN
+		ELSIF fbLogHandler_TxtFile.bFault THEN
 			stFault.Active := TRUE;
-			stFault.FaultType := E_FaultTypes.OW;
-			stFault.Description := CONCAT('Logger: ', GVL_Utilities.fbLogger.sFaultDescription);
+			stFault.FaultType := E_FaultTypes.OM;
+			stFault.Description := CONCAT('Logger: ', fbLogHandler_TxtFile.sFaultDescription);
 			eStateSystem 	:= E_StateSystem.CheckReferences;
 		END_IF
 

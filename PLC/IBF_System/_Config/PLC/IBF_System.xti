@@ -1,5 +1,148 @@
 <?xml version="1.0"?>
 <TcSmItem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.29" ClassName="CNestedPlcProjDef">
+	<DataTypes>
+		<DataType>
+			<Name GUID="{55E78202-FEFB-8540-4679-7C353B2A50F9}" Namespace="IBF_Utilities" AutoDeleteType="true">E_LogLevel</Name>
+			<BitSize>8</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000002}">USINT</BaseType>
+			<EnumInfo>
+				<Text><![CDATA[TRACE]]></Text>
+				<Enum>0</Enum>
+			</EnumInfo>
+			<EnumInfo>
+				<Text><![CDATA[DEBUG]]></Text>
+				<Enum>1</Enum>
+			</EnumInfo>
+			<EnumInfo>
+				<Text><![CDATA[INFO]]></Text>
+				<Enum>2</Enum>
+			</EnumInfo>
+			<EnumInfo>
+				<Text><![CDATA[WARN]]></Text>
+				<Enum>3</Enum>
+			</EnumInfo>
+			<EnumInfo>
+				<Text><![CDATA[ERROR]]></Text>
+				<Enum>4</Enum>
+			</EnumInfo>
+			<EnumInfo>
+				<Text><![CDATA[FATAL]]></Text>
+				<Enum>5</Enum>
+			</EnumInfo>
+			<Properties>
+				<Property>
+					<Name>qualified_only</Name>
+				</Property>
+				<Property>
+					<Name>strict</Name>
+				</Property>
+				<Property>
+					<Name>to_string</Name>
+				</Property>
+				<Property>
+					<Name>to_string_function</Name>
+					<Value>__TO_STRING__1390</Value>
+				</Property>
+				<Property>
+					<Name>to_wstring_function</Name>
+					<Value>__TO_WSTRING__1390</Value>
+				</Property>
+			</Properties>
+		</DataType>
+		<DataType>
+			<Name GUID="{6D1C8CFE-89A1-B3C2-9414-12D6CD53C177}" Namespace="Tc2_Utilities" AutoDeleteType="true">TIMESTRUCT</Name>
+			<Comment><![CDATA[ System Time Structure ]]></Comment>
+			<BitSize>128</BitSize>
+			<SubItem>
+				<Name>wYear</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Year: 1970..2106 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wMonth</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Month: 1..12 (January = 1, February = 2 and so on) ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wDayOfWeek</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Day of the week: 0..6 (Sunday = 0, Monday = 1, .. , Saturday = 6 and so on) ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wDay</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Day of the month: 1..31 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>48</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wHour</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Hour: 0..23 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wMinute</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Minute: 0..59 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>80</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wSecond</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Second: 0..59 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>96</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>wMilliseconds</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000004}">WORD</Type>
+				<Comment><![CDATA[ Milliseconds: 0..999 ]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>112</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{D83AA090-FE34-A981-CA8E-152E815FBC09}" Namespace="IBF_Utilities" AutoDeleteType="true">UDT_LogItem</Name>
+			<BitSize>2176</BitSize>
+			<SubItem>
+				<Name>eLevel</Name>
+				<Type GUID="{55E78202-FEFB-8540-4679-7C353B2A50F9}" Namespace="IBF_Utilities">E_LogLevel</Type>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>stTimestamp</Name>
+				<Type GUID="{6D1C8CFE-89A1-B3C2-9414-12D6CD53C177}" Namespace="Tc2_Utilities">TIMESTRUCT</Type>
+				<BitSize>128</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>sMsg</Name>
+				<Type GUID="{18071995-0000-0000-0000-0001000000FD}">STRING(253)</Type>
+				<Comment><![CDATA[ Keep 2 bytes room for CRLF line ending]]></Comment>
+				<BitSize>2032</BitSize>
+				<BitOffs>144</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name IecBaseType="true">ARRAY [1..10] OF IBF_Utilities.UDT_LogItem</Name>
+			<BitSize>21760</BitSize>
+			<BaseType GUID="{D83AA090-FE34-A981-CA8E-152E815FBC09}" Namespace="IBF_Utilities">UDT_LogItem</BaseType>
+			<ArrayInfo>
+				<LBound>1</LBound>
+				<Elements>10</Elements>
+			</ArrayInfo>
+		</DataType>
+	</DataTypes>
 	<Project GUID="{415F3D5F-C342-42EA-8090-AFFBDC07443A}" Name="IBF_System" PrjFilePath="..\..\IBF_System\IBF_System.plcproj" TmcFilePath="..\..\IBF_System\IBF_System.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
 		<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="IBF_System\IBF_System.tmc">
 			<Name>IBF_System Instance</Name>
@@ -32,6 +175,11 @@
 					<Type>BOOL</Type>
 				</Var>
 				<Var>
+					<Name>SystemBase.fbCmdReset.Istatus</Name>
+					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
+					<Type>BOOL</Type>
+				</Var>
+				<Var>
 					<Name>SystemBase.ibEstopOk</Name>
 					<Comment><![CDATA[ System emergency stop ok]]></Comment>
 					<Type>BOOL</Type>
@@ -44,11 +192,6 @@
 				<Var>
 					<Name>SystemBase.ibSafetyComErr</Name>
 					<Comment><![CDATA[ The "Com Error" group signal]]></Comment>
-					<Type>BOOL</Type>
-				</Var>
-				<Var>
-					<Name>SystemBase.fbCmdReset.Istatus</Name>
-					<Comment><![CDATA[ Digital sensor, Direct input status]]></Comment>
 					<Type>BOOL</Type>
 				</Var>
 			</Vars>
@@ -98,6 +241,20 @@
 					<Name>SystemBase.qbResetSafety</Name>
 					<Comment><![CDATA[ Reset safety program]]></Comment>
 					<Type>BOOL</Type>
+				</Var>
+			</Vars>
+			<Vars VarGrpType="8" AreaNo="4">
+				<Name>PlcTask Retains</Name>
+				<Var>
+					<Name>SystemBase.fbLogHandler_RetainableList.aLogItems</Name>
+					<Type GUID="{E6D9C198-35E9-E2B4-BA7D-CB7A41051EE1}">ARRAY [1..10] OF IBF_Utilities.UDT_LogItem</Type>
+					<InOut>7</InOut>
+				</Var>
+				<Var>
+					<Name>SystemBase.fbLogHandler_RetainableList.nIndex</Name>
+					<Comment><![CDATA[ Index in the array of the last added log item]]></Comment>
+					<Type>UINT</Type>
+					<InOut>7</InOut>
 				</Var>
 			</Vars>
 			<Contexts>

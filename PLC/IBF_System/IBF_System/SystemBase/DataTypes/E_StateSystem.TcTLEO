@@ -7,7 +7,7 @@
 TYPE E_StateSystem :
 (
 	FirstCycle		,
-	EnableLogger	,	// System is enabling the global logger
+	CheckLogger		,
 	CheckReferences ,  	// System is checking if module references are OK
 	Initialize		, 	// System is initializing
 	LoadParameters	, 	// System is loading parameters from/to file
@@ -33,7 +33,7 @@ END_TYPE
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
-              <v n="TextID">"EnableLogger"</v>
+              <v n="TextID">"CheckLogger"</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
