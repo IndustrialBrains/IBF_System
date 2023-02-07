@@ -563,8 +563,8 @@ CASE eStateSystem OF
 	E_StateSystem.FirstCycle:
 		// Add log handlers
 		sDummyString := PAR_System.LOG_FOLDER; // Suppress unused variable error (Beckhoff bug)
-		fbLogger.AddLogHandler(fbLogHandler_TxtFile);
-		fbLogger.AddLogHandler(fbLogHandler_RetainableList);
+		fbLogger.RegisterLogHandler(fbLogHandler_TxtFile, E_LogLevel.TRACE);
+		fbLogger.RegisterLogHandler(fbLogHandler_RetainableList, E_LogLevel.INFO);
 		eStateSystem 	:= E_StateSystem.CheckLogger;
 
 	E_StateSystem.CheckLogger:
@@ -656,7 +656,7 @@ CASE eStateSystem OF
 		IF bError THEN
 			eStateSystem := E_StateSystem.Fault;
 		ELSIF fbCmdReset.bFeStatus THEN
-			eStateSystem := E_StateSystem.Resetting;			
+			eStateSystem := E_StateSystem.Resetting;
 		ELSIF GVL_HMI.fbHMIControl.bInScreenManual THEN 
 			eStateSystem := E_StateSystem.Manual ;
 		ELSIF fbCmdStartSystem.bFeStatus THEN 
