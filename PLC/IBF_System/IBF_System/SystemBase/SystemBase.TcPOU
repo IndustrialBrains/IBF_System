@@ -227,6 +227,9 @@ ELSE
 	bAirOk := TRUE ;
 END_IF
 
+// HMI control
+GVL_HMI.fbHMIControl(fbLogHandler_RetainableList := SystemBase.fbLogHandler_RetainableList);
+
 // Execute button functions 
 fbStartAuto		(tDelay	:= T#100MS, bEmbedded := TRUE);
 fbStartSemiAuto (tDelay	:= T#100MS, bEmbedded := TRUE); 
