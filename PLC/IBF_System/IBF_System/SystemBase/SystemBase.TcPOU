@@ -49,6 +49,8 @@ VAR_OUTPUT
 END_VAR
 VAR
 	// Logger & loghandlers
+	fbLogHandler_ADSLOG : FB_LogHandler_ADSLOG;
+	fbLogHandler_PersistentArray : FB_LogHandler_PersistentArray;
 	fbLogHandler_TxtFile : FB_LogHandler_TxtFile(
 								sLogFolder := PAR_System.LOG_FOLDER,
 								sLogFilePrefix := 'Log_',
@@ -56,7 +58,6 @@ VAR
 								nMaxLogFileSize := 256*1024, // 256kb is enough for at least 1000 lines. The HMI text editor should be able to handle this (tested on a TwinCAT/BSB VM).
 								nMaxNumberOfLogFiles := 100 // 256kb * 100 = 25MB
 							);
-	fbLogHandler_RetainableList : FB_LogHandler_RetainableList;
 	fbLogger : FB_Logger();
 			
 	// System inputs 
@@ -210,11 +211,11 @@ END_FOR
       <Declaration><![CDATA[METHOD PRIVATE CallSystemFunctions : BOOL
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Update system variables 
-fbSetSystemVariables();
-
-// Run logger
+        <ST><![CDATA[// Run logger
 fbLogger.Run();
+
+// Update system variables 
+fbSetSystemVariables();
 
 // Call global parameter handler
 GVL_Parameters.fbParameterHandler();
@@ -228,7 +229,7 @@ ELSE
 END_IF
 
 // HMI control
-GVL_HMI.fbHMIControl(fbLogHandler_RetainableList := SystemBase.fbLogHandler_RetainableList);
+GVL_HMI.fbHMIControl(fbLogHandler_RetainableList := SystemBase.fbLogHandler_PersistentArray);
 
 // Execute button functions 
 fbStartAuto		(tDelay	:= T#100MS, bEmbedded := TRUE);
@@ -563,8 +564,9 @@ CASE eStateSystem OF
 	E_StateSystem.FirstCycle:
 		// Add log handlers
 		sDummyString := PAR_System.LOG_FOLDER; // Suppress unused variable error (Beckhoff bug)
-		fbLogger.RegisterLogHandler(fbLogHandler_TxtFile, E_LogLevel.TRACE);
-		fbLogger.RegisterLogHandler(fbLogHandler_RetainableList, E_LogLevel.INFO);
+		fbLogger.RegisterLogHandler(fbLogHandler_ADSLOG, E_LogLevel.ERROR); // Send ERROR level (and higher) items to the TwinCAT XAE console & Windows event log
+		fbLogger.RegisterLogHandler(fbLogHandler_PersistentArray, E_LogLevel.INFO); // Store last 100 INFO level (and higher) items to a persistent array, which can be viewed in the HMI
+		fbLogger.RegisterLogHandler(fbLogHandler_TxtFile, E_LogLevel.TRACE); // Store all items in a text file
 		eStateSystem 	:= E_StateSystem.CheckLogger;
 
 	E_StateSystem.CheckLogger:
