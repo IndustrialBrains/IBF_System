@@ -114,28 +114,43 @@ END_VAR
 VAR // Miscellaneous
 	stIdentity 		: UDT_Identity := (sName := 'System');
 	bCmdResetBusy 	: BOOL;
+	
+	bADSLogErrorTriggered : BOOL;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Call system functions 
-CallSystemFunctions();
+      <ST><![CDATA[// Only run system if persistent values have been loaded, if not: trigger an error message
+IF (TwinCAT_SystemInfoVarList._AppInfo.BootDataLoaded) AND (TwinCAT_SystemInfoVarList._AppInfo.PersistentStatus = EPlcPersistentStatus.PS_All) THEN
+	
+	// Call system functions 
+	CallSystemFunctions();
+	
+	// Execute fault handing
+	ExecFaultHandling();
+	
+	// Handle UPS
+	ExecUPS();
+	
+	// Execute safety control (controls E-Stop safety modules and enables air supply)
+	ExecSafetyControl();
+	
+	// Call modules 
+	CallModules();
+	
+	// Call manual control handler (must be done after calling modules, otherwise bCmdManual will toggle
+	IBF_Devices.GVL_Devices.fbManualController(bBlockManualMode := (eStateSystem <> E_StateSystem.Manual));
+	
+	// Execute state machine
+	ExecSystemRun();
 
-// Execute fault handing
-ExecFaultHandling();
+ELSIF NOT bADSLogErrorTriggered THEN
+	bADSLogErrorTriggered := TRUE; // Make sure message is only triggered once
+	ADSLOGSTR(
+		msgCtrlMask := ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_MSGBOX OR ADSLOG_MSGTYPE_LOG,
+		msgFmtStr := 'Unable to restore PLC persistent values! Manually restart TwinCAT3 System Service',
+		strArg := ''
+	);
 
-// Handle UPS
-ExecUPS();
-
-// Execute safety control (controls E-Stop safety modules and enables air supply)
-ExecSafetyControl();
-
-// Call modules 
-CallModules();
-
-// Call manual control handler (must be done after calling modules, otherwise bCmdManual will toggle
-IBF_Devices.GVL_Devices.fbManualController(bBlockManualMode := (eStateSystem <> E_StateSystem.Manual));
-
-// Execute state machine
-ExecSystemRun();
+END_IF
 ]]></ST>
     </Implementation>
     <Folder Name="ModuleFunctions" Id="{fb1414af-f6e5-4202-8989-256aa0d1eacc}" />
@@ -229,7 +244,7 @@ ELSE
 END_IF
 
 // HMI control
-GVL_HMI.fbHMIControl(fbLogHandler_RetainableList := SystemBase.fbLogHandler_PersistentArray);
+GVL_HMI.fbHMIControl(fbLogHandler_PersistentArray := SystemBase.fbLogHandler_PersistentArray);
 
 // Execute button functions 
 fbStartAuto		(tDelay	:= T#100MS, bEmbedded := TRUE);
