@@ -255,17 +255,20 @@ fbCmdStartAuto	(bEmbedded := TRUE);
 fbCmdStopAuto	(bEmbedded := TRUE);
 
 // Reset button (lamp)
-IF (GVL_Utilities.fbFaultHandler.nActiveFaults > 0) THEN
-	IF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.FF] THEN
-		// Fatal fault
-		fbCmdReset.CmdOn() ;
-	ELSIF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] THEN
-		// Cycle fault
-		fbCmdReset.CmdBlinkSlow() ;
-	ELSIF NOT GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.OM] THEN
-		// Warning
-		fbCmdReset.CmdBlinkFast() ;
-	END_IF
+IF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.FF] THEN
+	// Fatal fault
+	fbCmdReset.CmdOn() ;
+ELSIF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.CF] THEN
+	// Cycle fault
+	fbCmdReset.CmdBlinkSlow() ;
+ELSIF GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.OW]
+	OR GVL_Utilities.fbFaultHandler.arActiveFaultTypes[E_FaultTypes.MC]
+THEN
+	// Warning
+	fbCmdReset.CmdBlinkFast() ;
+ELSIF (eStateSystem = E_StateSystem.Safe) OR (eStateSystem = E_StateSystem.Fault) THEN
+	// In a state that needs a reset button press
+	fbCmdReset.CmdBlinkSlow() ;
 END_IF
 
 // execute input functions
